@@ -116,7 +116,7 @@ add_project_arguments(cxx.get_supported_arguments(compiler_settings), language: 
 incdir = []
 incdir += include_directories(
   '/usr/local/include', # $ASIO_ROOT.
-  '../',                # CommonDefinitions.h, Date.h, randutils.hpp, Threading.h
+  '../',                # CommonDefinitions.h, randutils.hpp, Threading.h
 )
 # Can add more previously defined top_inc include_directories here:
 # incdir += top_inc 

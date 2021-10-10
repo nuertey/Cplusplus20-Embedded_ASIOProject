@@ -114,7 +114,7 @@ SessionManager::SessionManager()
         
         // Since no readings exist as yet, default all readings to stale.
         m_TheCustomerSensors[i].m_CurrentReadingTime = SystemClock_t::now()
-                - std::chrono::minutes(STALE_READING_DURATION_MINUTES + 1);
+                - Minutes_t(STALE_READING_DURATION_MINUTES + 1);
     }
     
     // Initial display.
@@ -249,7 +249,7 @@ void SessionManager::DisplayTemperatureData()
     auto timeNow = SystemClock_t::now();
 
     if ((timeNow - m_LastReadoutTime) 
-         >= std::chrono::seconds(MINIMUM_DISPLAY_INTERVAL_SECONDS))
+         >= Seconds_t(MINIMUM_DISPLAY_INTERVAL_SECONDS))
     {
         // Customer Requirement:
         //

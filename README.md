@@ -46,23 +46,15 @@ The following requirements were agreed upon for the application:
  It is assumed that the C++ Standard Template Library (STL)
  and the ASIO C++ Networking Library are available to us.
 
- Furthermore, I have brought in these three other non-standard 
- header files as dependencies:
+ Furthermore, I have brought in these two other non-standard header
+ files as dependencies:
 
  [1] My personally developed POSIX threading utilities to aid
  in development and debug of multi-threaded systems. It is
  especially useful for debug as different threads can be named,
  observed and disambiguated via strace, ps, valgrind, gdb, etc.
 
- [2] Howard Hinnant's date and time library for C++11/14/17.
- Note that though this has since been voted into and subsumed
- into the C++20 standard, I am presuming that the User's 
- compiler is only up to C++17, per Markem-Imaje dev envronment.
-
- - https://github.com/HowardHinnant/date
- - https://howardhinnant.github.io/date/date.html 
-
- [3] Professor M.E. O'Neill's C++11 random number utilities.
+ [2] Professor M.E. O'Neill's C++11 random number utilities.
  Lacking in the C++ Standard is that namespace encapsulation 
  (randutils::) designed by Prof. O'Neill that ties all the 
  standard C++11 random-number entities and their disparate
@@ -253,7 +245,6 @@ range:
 ├── ASIO_Overview.gif
 ├── ClassDiagram_detailed.png
 ├── CommonDefinitions.h
-├── Date.h
 ├── LICENSE.md
 ├── meson.build
 ├── randutils.hpp
@@ -277,7 +268,7 @@ range:
 │   └── TestArtifactSensorNode.cpp
 └── Threading.h
 
-1 directory, 25 files
+1 directory, 24 files
 
 ```
 

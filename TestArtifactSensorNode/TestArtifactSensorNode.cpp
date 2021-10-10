@@ -1,4 +1,3 @@
-#include <boost/asio.hpp>
 #include "CommonDefinitions.h"
 
 static constexpr uint8_t SENSOR_DATA_PERIOD_SECONDS       = 60; // 1 minute = 60 seconds.
@@ -80,7 +79,7 @@ private:
         }
         
         // Holdoff till next sensor acquisition iteration time.
-        std::this_thread::sleep_for(std::chrono::seconds(holdoffTime));
+        std::this_thread::sleep_for(Seconds_t(holdoffTime));
     }
 
     void DoWrite()
