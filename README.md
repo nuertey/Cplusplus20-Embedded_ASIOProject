@@ -87,6 +87,8 @@ so as to familiarize yourself with the structural organization of the
 ASIO C++ Library. That diagram also makes clear the objects and entities
 that comprise this useful library.
 
+![ASIO Overview Structural Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/ASIO_Overview.gif?raw=true)
+
 ASIO (Asynchronous I/O) is defined as:   
 
 "Asio is a cross-platform C++ library for network and low-level I/O 
