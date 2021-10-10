@@ -1,8 +1,8 @@
-# C++ DESIGN EXERCISE - NUERTEY ODZEYEM SUBMISSION
+# C++20 EMBEDDED ASIO PROJECT - NUERTEY ODZEYEM SUBMISSION
 
 ## PROBLEM STATEMENT:
 
-We are designing a system for a customer that wants a real-time readout 
+"We are designing a system for a customer that wants a real-time readout 
 of the outside temperature on a display mounted to the wall of their 
 meeting room. 
 
@@ -37,7 +37,7 @@ The following requirements were agreed upon for the application:
    than 10 minutes shall be considered stale and excluded from the 
    displayed temperature.
 4. If no temperature readings are available, or if the application 
-   terminates, the readout shall display “--.- °C”.
+   terminates, the readout shall display “--.- °C”."
 
 ## DESIGN OVERVIEW:
 
@@ -73,11 +73,12 @@ The following requirements were agreed upon for the application:
 Be aware that I have designed things in such a way that most of the socket
 operations that occur within this module will occur asynchronously. 
 
-Asynchronicity is the Mother of Speed, Nimbleness and Responsiveness. 
-The equivalent POSIX networking I/O paradigm would be epoll().
+Asynchronicity is the Mother of Speed, Nimbleness and Responsiveness. To 
+sate thy righteous Curiosity, the POSIX networking I/O paradigm that 
+would be equivalent to ASIO would be epoll().
 
 Kindly step through the code for more extensive comments; especially in
-explaining the io_context usage.
+explaining the ASIO io_context usage.
 
 ## ASIO C++ Library OVERVIEW
 
