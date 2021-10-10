@@ -3,12 +3,13 @@
 namespace Common
 {
     asio::io_context                     g_DispatcherIOContext;
-    std::optional<ExecutorWorkGuard_t>   g_DispatcherWork = boost::none;
+    //std::optional<ExecutorWorkGuard_t>   g_DispatcherWork = boost::none;
+    std::optional<ExecutorWorkGuard_t>   g_DispatcherWork = asio::cancellation_type::none;
     ThreadPack_t                         g_DispatcherWorkerThreads;
 
     void SetupIOContext()
     {
-        g_DispatcherWork.emplace(boost::asio::make_work_guard(g_DispatcherIOContext));
+        g_DispatcherWork.emplace(asio::make_work_guard(g_DispatcherIOContext));
     }
 
     void RunWorkerThreads()
@@ -17,8 +18,8 @@ namespace Common
         {
             // Create the std::thread that will wait for ALL 'work' 
             // (past, present and future) to be scheduled from the 
-            // potentially many asynchronuous socket instances.
-            g_DispatcherWorkerThreads.emplace_back(std::thread(DispatcherWorkerThread));
+            // potentially many asynchronous socket instances.
+            g_DispatcherWorkerThreads[i] = std::move(std::thread(DispatcherWorkerThread));
         }
     }
 
@@ -47,7 +48,8 @@ namespace Common
         // destroyed:
         
         // Allow io_context.run() to naturally and gracefully exit.
-        g_DispatcherWork = boost::none; 
+        //g_DispatcherWork = boost::none; 
+        g_DispatcherWork = asio::cancellation_type::none;
         
         // To effect a shutdown, the application will then need to call 
         // the io_context object's stop() member method. This will cause
@@ -65,7 +67,7 @@ namespace Common
         // exit prematurely, way before the worker(s) are done working.
         // The keyword here is "likely". For we are even 'lucky' to 
         // observe such relatively benign behavior/results such as in my
-        // testing scenarios. For, per the Boost.Asio/C++ Networking TS
+        // testing scenarios. For, per the ASIO/C++ Networking TS
         // standard, calling g_DispatcherIOContext.stop() or reset() 
         // while there are unfinished run(), run_one(), poll() or 
         // poll_one() pending calls WILL result in undefined behavior. 
@@ -96,7 +98,7 @@ SessionManager::SessionManager()
         
         // All operations to occur on ALL the socket connections will
         // occur asynchronously but in the same worker thread context 
-        // and on the same Boost.Asio io_context. Asynchronicity will
+        // and on the same ASIO io_context. Asynchronicity will
         // guarantee us the fastest most nimble response. i.e. realtime.
         m_TheCustomerSensors[i].m_pConnectionSocket = std::make_unique<tcp::socket>(Common::g_DispatcherIOContext);
         
@@ -163,16 +165,17 @@ void SessionManager::Start()
 
 void SessionManager::ReceiveTemperatureData(SensorNode_t& sensor)
 {
+    // Stringently manage our object lifetime even through callbacks, 
+    // with the appropriate C++ lambda captures on shared_ptr to self.
     auto self(shared_from_this());
     
-    // Note that though boost::asio::ip::tcp::socket is NOT thread safe,
+    // Note that though asio::ip::tcp::socket is NOT thread safe,
     // we are guaranteed safe operation as we are receiving asynchronously
     // and sequentially per sensor node socket.
     
     // Use an ad-hoc lambda completion handler for asynchronous operation.
-    // & (implicitly capture the used automatic variables by reference).
     sensor.m_pConnectionSocket->async_receive(asio::buffer(sensor.m_TcpData),
-                         [&](std::error_code const &error, std::size_t length)
+                         [self](std::error_code const &error, std::size_t length)
     {
         if (!error)
         {
@@ -192,7 +195,7 @@ void SessionManager::ReceiveTemperatureData(SensorNode_t& sensor)
             // display. Without this precaution, we might deadlock.
             asio::post(Common::g_DispatcherIOContext, 
                        std::bind(&SessionManager::DisplayTemperatureData,
-                       this));
+                       self));
         }
         else
         {
@@ -224,16 +227,18 @@ void SessionManager::ReceiveTemperatureData(SensorNode_t& sensor)
         // Here then goes: 
         
         // ... Do not forget to set up asynchronous read handler again.
-        ReceiveTemperatureData(sensor);
+        self->ReceiveTemperatureData(sensor);
     });
 }
 
 void SessionManager::DisplayTemperatureData()
 {
+    // Stringently manage our object lifetime even through callbacks, 
+    // with the appropriate C++ lambda captures on shared_ptr to self. 
     auto self(shared_from_this());
     
     // Always protect the display abstraction via mutual exclusion.
-    std::unique_lock<std::mutex> lock(m_TheDisplayMutex);
+    std::unique_lock<std::mutex> lock(self->m_TheDisplayMutex);
 
     // Customer Requirement:
     //
@@ -241,7 +246,7 @@ void SessionManager::DisplayTemperatureData()
     // shall not change faster than once per second."
     auto timeNow = SystemClock_t::now();
 
-    if ((timeNow - m_LastReadoutTime) 
+    if ((timeNow - self->m_LastReadoutTime) 
          >= Seconds_t(MINIMUM_DISPLAY_INTERVAL_SECONDS))
     {
         // Customer Requirement:
@@ -251,7 +256,7 @@ void SessionManager::DisplayTemperatureData()
         double averageTemperature = 0.0;
         auto count = 0;
         
-        for (const auto& sensor : m_TheCustomerSensors)
+        for (const auto& sensor : self->m_TheCustomerSensors)
         {
             // Customer Requirement:
             //
@@ -279,6 +284,6 @@ void SessionManager::DisplayTemperatureData()
         std::cout << "\t\t" << std::fixed << std::setprecision(1)
                   << averageTemperature << " °C" << "\n";
         
-        m_LastReadoutTime = SystemClock_t::now();
+        self->m_LastReadoutTime = SystemClock_t::now();
     }
 }
