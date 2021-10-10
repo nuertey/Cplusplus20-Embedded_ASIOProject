@@ -299,42 +299,68 @@ sudo tar -xvf ./NuerteyOdzeyem_C++20_EmbeddedASIO_Project.tar
 
 ## COMPILATION:
 ```
+# Test Application:
+cd ./subprojects/TestArtifactSensorNode
 rm -rf build
 mkdir build
 meson build/
-ninja -j3 -C build
-cd build
+ninja -C build
+
+# TemperatureReadoutApplication
+cd ../..
+pwd
+    .../DesignExercise-ASIO
+
+rm -rf build
+mkdir build
+meson build/
+ninja -C build
 ```
 
 ## EXECUTION EXAMPLES:
 
 [Just 1 Temperature Sensor Node]
 ```
-./TestArtifactSensorNode/TestArtifactSensorNode 5000
+# First edit SessionManager.h and set static array SensorPack_t to size 1:
+#
+# using SensorPack_t = std::array<SensorNode_t, 1>;
+#
+# Then rebuild the TemperatureReadoutApplication only, and rerun the 
+# tests in the following manner:
 
-./TemperatureReadoutApplication
+./build/TestArtifactSensorNode 5000
+
+./build/TemperatureReadoutApplication
 ```
 
 or
 
 [4 Temperature Sensor Nodes]
 ```
-./TestArtifactSensorNode/TestArtifactSensorNode 5000
+# First edit SessionManager.h and set static array SensorPack_t to size 4:
+#
+# using SensorPack_t = std::array<SensorNode_t, 4>;
+#
+# Then rebuild the TemperatureReadoutApplication only, and rerun the 
+# tests in the following manner:
 
-./TestArtifactSensorNode/TestArtifactSensorNode 5001
+./build/TestArtifactSensorNode 5000
 
-./TestArtifactSensorNode/TestArtifactSensorNode 5002
+./build/TestArtifactSensorNode 5001
 
-./TestArtifactSensorNode/TestArtifactSensorNode 5003
+./build/TestArtifactSensorNode 5002
 
-./TemperatureReadoutApplication
+./build/TestArtifactSensorNode 5003
+
+./build/TemperatureReadoutApplication
 ```
 
 ## EXECUTION EXAMPLES WITH TEST ARTIFACTS:
 
-1. Open a new terminal to represent a Temperature Sensor Node. Issue the following command:
+1. Open a new terminal to represent a Temperature Sensor Node. Issue the
+following command:
 ```
-./TestArtifactSensorNode/TestArtifactSensorNode 5000
+./build/TestArtifactSensorNode 5000
 
     Output:
     
@@ -355,9 +381,11 @@ or
     About to send temperature reading to TemperatureReadoutApplication... 
 ```
 
-2. On the original compile window, designate that that represents the Temperature Readout Application. Issue the following command: 
+2. On the original compile window, designate that that represents the 
+Temperature Readout Application. Issue the following command: 
+
 ```
-./TemperatureReadoutApplication
+./build/TemperatureReadoutApplication
 
     Output:
     
@@ -379,6 +407,13 @@ or
             -26.7 °C
     
             27.9 °C
+            
+^\[WARN] Signal Received: Closing application orderly, cleanly and gracefully.
+
+        --.- °C
+^Z
+[4]+  Stopped                 ./build/TemperatureReadoutApplication
+
 
 ```
 4. The algorithm should then begin accepting temperature readings and 
@@ -389,7 +424,7 @@ Readout Application) for the appropriate output.
 ## EXECUTION OUTPUT WITH 4 TEMPERATURE SENSOR NODES:
 
 ```
-./TemperatureReadoutApplication
+./build/TemperatureReadoutApplication
 
     Output:
     
@@ -450,6 +485,16 @@ Readout Application) for the appropriate output.
             9.6 °C
             -2.1 °C
             10.0 °C
+            
+^\[WARN] Signal Received: Closing application orderly, cleanly and gracefully.
+
+        --.- °C
+^\[WARN] Signal Received: Closing application orderly, cleanly and gracefully.
+
+        --.- °C
+^Z
+[4]+  Stopped                 ./build/TemperatureReadoutApplication
+
 ```
  
 ## EXIT:

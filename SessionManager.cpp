@@ -48,6 +48,7 @@ namespace Common
         // destroyed:
         
         // Allow io_context.run() to naturally and gracefully exit.
+        // Work guard is destroyed, io_context::run is free to return.
         g_DispatcherWork.reset(); 
         
         // To effect a shutdown, the application will then need to call 
@@ -173,8 +174,9 @@ void SessionManager::ReceiveTemperatureData(SensorNode_t& sensor)
     // and sequentially per sensor node socket.
     
     // Use an ad-hoc lambda completion handler for asynchronous operation.
+    // & (implicitly capture the used automatic variables by reference).
     sensor.m_pConnectionSocket->async_receive(asio::buffer(sensor.m_TcpData),
-                         [self, sensor](std::error_code const &error, std::size_t length)
+                         [&](std::error_code const &error, std::size_t length)
     {
         if (!error)
         {
@@ -194,7 +196,7 @@ void SessionManager::ReceiveTemperatureData(SensorNode_t& sensor)
             // display. Without this precaution, we might deadlock.
             asio::post(Common::g_DispatcherIOContext, 
                        std::bind(&SessionManager::DisplayTemperatureData,
-                       self));
+                       this));
         }
         else
         {
@@ -226,7 +228,7 @@ void SessionManager::ReceiveTemperatureData(SensorNode_t& sensor)
         // Here then goes: 
         
         // ... Do not forget to set up asynchronous read handler again.
-        self->ReceiveTemperatureData(sensor);
+        ReceiveTemperatureData(sensor);
     });
 }
 
@@ -237,7 +239,7 @@ void SessionManager::DisplayTemperatureData()
     auto self(shared_from_this());
     
     // Always protect the display abstraction via mutual exclusion.
-    std::unique_lock<std::mutex> lock(self->m_TheDisplayMutex);
+    std::unique_lock<std::mutex> lock(m_TheDisplayMutex);
 
     // Customer Requirement:
     //
@@ -245,7 +247,7 @@ void SessionManager::DisplayTemperatureData()
     // shall not change faster than once per second."
     auto timeNow = SystemClock_t::now();
 
-    if ((timeNow - self->m_LastReadoutTime) 
+    if ((timeNow - m_LastReadoutTime) 
          >= Seconds_t(MINIMUM_DISPLAY_INTERVAL_SECONDS))
     {
         // Customer Requirement:
@@ -255,7 +257,7 @@ void SessionManager::DisplayTemperatureData()
         double averageTemperature = 0.0;
         auto count = 0;
         
-        for (const auto& sensor : self->m_TheCustomerSensors)
+        for (const auto& sensor : m_TheCustomerSensors)
         {
             // Customer Requirement:
             //
@@ -283,6 +285,6 @@ void SessionManager::DisplayTemperatureData()
         std::cout << "\t\t" << std::fixed << std::setprecision(1)
                   << averageTemperature << " °C" << "\n";
         
-        self->m_LastReadoutTime = SystemClock_t::now();
+        m_LastReadoutTime = SystemClock_t::now();
     }
 }
