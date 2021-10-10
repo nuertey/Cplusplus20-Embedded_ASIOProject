@@ -1,0 +1,2 @@
+[wrap-redirect]
+filename = TestArtifactSensorNode/subprojects/spdlog.wrap
