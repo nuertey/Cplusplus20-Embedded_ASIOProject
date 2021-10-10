@@ -3,8 +3,7 @@
 namespace Common
 {
     asio::io_context                     g_DispatcherIOContext;
-    //std::optional<ExecutorWorkGuard_t>   g_DispatcherWork = boost::none;
-    std::optional<ExecutorWorkGuard_t>   g_DispatcherWork = asio::cancellation_type::none;
+    std::optional<ExecutorWorkGuard_t>   g_DispatcherWork;
     //std::optional<ExecutorWorkGuard_t> g_DispatcherWork(g_DispatcherIOContext.get_executor());
     ThreadPack_t                         g_DispatcherWorkerThreads;
 
@@ -49,8 +48,7 @@ namespace Common
         // destroyed:
         
         // Allow io_context.run() to naturally and gracefully exit.
-        //g_DispatcherWork = boost::none; 
-        g_DispatcherWork = asio::cancellation_type::none;
+        g_DispatcherWork.reset(); 
         
         // To effect a shutdown, the application will then need to call 
         // the io_context object's stop() member method. This will cause
@@ -176,7 +174,7 @@ void SessionManager::ReceiveTemperatureData(SensorNode_t& sensor)
     
     // Use an ad-hoc lambda completion handler for asynchronous operation.
     sensor.m_pConnectionSocket->async_receive(asio::buffer(sensor.m_TcpData),
-                         [self](std::error_code const &error, std::size_t length)
+                         [self, sensor](std::error_code const &error, std::size_t length)
     {
         if (!error)
         {

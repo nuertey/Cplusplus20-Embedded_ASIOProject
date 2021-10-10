@@ -263,12 +263,18 @@ range:
 ├── Sunburst_Plot-8.png
 ├── Sunburst_Plot-9.png
 ├── TemperatureReadoutApplication.cpp
-├── TestArtifactSensorNode
-│   ├── meson.build
-│   └── TestArtifactSensorNode.cpp
+├── subprojects
+│   ├── fmt.wrap
+│   ├── spdlog.wrap
+│   └── TestArtifactSensorNode
+│       ├── meson.build
+│       ├── subprojects
+│       │   ├── fmt.wrap
+│       │   └── spdlog.wrap
+│       └── TestArtifactSensorNode.cpp
 └── Threading.h
 
-1 directory, 24 files
+1 directory, 28 files
 
 ```
 

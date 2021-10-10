@@ -116,7 +116,6 @@ add_project_arguments(cxx.get_supported_arguments(compiler_settings), language: 
 incdir = []
 incdir += include_directories(
   '/usr/local/include', # $ASIO_ROOT.
-  '../',                # CommonDefinitions.h, randutils.hpp, Threading.h
 )
 # Can add more previously defined top_inc include_directories here:
 # incdir += top_inc 
@@ -150,7 +149,9 @@ thread_dep = dependency('threads', required : true)
 # around in the following manner:
 #
 # sudo apt-get install libspdlog-dev
-spdlog_dep = dependency('spdlog', required : false)
+
+# |Using subprojects/TestArtifactSensorNode/subprojects/spdlog.wrap
+spdlog_dep = dependency('spdlog', required : true)
 
 if not spdlog_dep.found()
     spdlog_proj = subproject('spdlog')
@@ -162,6 +163,8 @@ endif
 #spdlog_dep = dependency('spdlog', fallback : [spdlog, spdlog_dep])
 
 # '-lfmt' is better replaced with the following because more portable:
+
+# |Using subprojects/TestArtifactSensorNode/subprojects/fmt.wrap
 fmt_dep = dependency('fmt', required : true)
 
 # As an addendum, ensure that the host system also has the requisite  
@@ -177,6 +180,7 @@ temperature_readout_project_sources = files([
     'TemperatureReadoutApplication.cpp'
 ])
 
+# /home/nuertey/py37-venv/bin/ninja -C build
 temperature_readout_project = executable(
     'TemperatureReadoutApplication', 
     temperature_readout_project_sources,
