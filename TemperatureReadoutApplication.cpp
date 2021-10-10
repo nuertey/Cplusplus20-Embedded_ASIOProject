@@ -53,7 +53,10 @@ void terminator(int signalNumber)
     if ((SIGTERM == signalNumber) || (SIGINT == signalNumber) || (SIGQUIT == signalNumber))
     {
         std::cout << "[WARN] Signal Received: Closing application orderly, cleanly and gracefully." << "\n\n";
-        Common::DestroyWorkerThreads();
+        
+        // This call is designed to be thread-safe so go ahead and invoke
+        // it from the asynchronous signal context.
+        Common::DestroyWorkerThreads(); 
         
         // Customer Requirement:
         //

@@ -5,6 +5,7 @@ namespace Common
     asio::io_context                     g_DispatcherIOContext;
     //std::optional<ExecutorWorkGuard_t>   g_DispatcherWork = boost::none;
     std::optional<ExecutorWorkGuard_t>   g_DispatcherWork = asio::cancellation_type::none;
+    //std::optional<ExecutorWorkGuard_t> g_DispatcherWork(g_DispatcherIOContext.get_executor());
     ThreadPack_t                         g_DispatcherWorkerThreads;
 
     void SetupIOContext()
@@ -142,7 +143,7 @@ void SessionManager::Start()
         tcp::resolver::iterator destination1 = resolver1.resolve(query1);
         tcp::endpoint endpoint1;
 
-        while (destination1 != boost::asio::ip::tcp::resolver::iterator()) 
+        while (destination1 != asio::ip::tcp::resolver::iterator()) 
         {
             endpoint1 = *destination1++;
             std::cout << "[DEBUG] Connecting to TCP endpoint :-> " 
