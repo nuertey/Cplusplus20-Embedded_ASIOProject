@@ -6,6 +6,8 @@
 of the outside temperature on a display mounted to the wall of their 
 meeting room. 
 
+![Customer Readout Illustration](https://github.com/nuertey/RandomArtifacts/blob/master/DisplayReadout.png?raw=true)
+
 The outdoor temperature varies around their site, so they have installed
 several temperature data collection systems around their grounds. The 
 data collection systems (nodes) are networked via WiFi and send data via
@@ -78,7 +80,10 @@ sate thy righteous Curiosity, the POSIX networking I/O paradigm that
 would be equivalent to ASIO would be epoll().
 
 Kindly step through the code for more extensive comments; especially in
-explaining the ASIO io_context usage.
+explaining the ASIO io_context usage. For a class diagram depicting the
+solution source code, see below:
+
+![Solution Design Class Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/ClassDiagram_detailed.png?raw=true)
 
 ## ASIO C++ Library OVERVIEW
 
@@ -175,6 +180,18 @@ using SensorPack_t = std::array<SensorNode_t, 4>;
     }
 ```
 
+The following sunburst class/object hierarchical diagrams further 
+illustrate the solution source code:
+
+![Parent Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/Sunburst_Plot-1.png?raw=true)
+![TemperatureReadoutApplication Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/Sunburst_Plot-5.png?raw=true)
+![Utility:: Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/Sunburst_Plot-6.png?raw=true)
+![SessionManager Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/Sunburst_Plot-7.png?raw=true)
+![Common:: Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/Sunburst_Plot-8.png?raw=true)
+![SensorPack_t Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/Sunburst_Plot-9.png?raw=true)
+![SensorNode_t Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/Sunburst_Plot-10.png?raw=true)
+![TcpData_t Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/Sunburst_Plot-11.png?raw=true)
+
 ## TESTING DEFINITIONS:
 ```c++
 static constexpr uint8_t SENSOR_DATA_PERIOD_SECONDS       = 60; // 1 minute = 60 seconds.
@@ -201,6 +218,14 @@ enum class SensorMode_t : uint8_t
                                   {SensorMode_t::SENSOR_PERIODIC_MODE, 
                                    SensorMode_t::SENSOR_RANDOM_CHANGE});
 ```
+
+The following sunburst class/object hierarchical diagrams further 
+illustrate the Test Artifact source code:
+
+![Parent Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/Sunburst_Plot-1.png?raw=true)
+![TestArtifactSensorNode Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/Sunburst_Plot-2.png?raw=true)
+![SensorNodeServer Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/Sunburst_Plot-3.png?raw=true)
+![TCPSession Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/Sunburst_Plot-4.png?raw=true)
 
 ## TESTING ASSUMPTIONS:
 
