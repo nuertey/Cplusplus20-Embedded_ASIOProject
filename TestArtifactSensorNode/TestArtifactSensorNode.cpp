@@ -48,9 +48,8 @@ private:
 
         // Send current temperature reading to the TemperatureReadoutApplication.
         std::cout << "About to send temperature reading to TemperatureReadoutApplication... \n";
-        boost::asio::write(m_Socket, boost::asio::buffer(
-                                             temperatureString.data(), 
-                                             temperatureString.size()));        
+        asio::write(m_Socket, asio::buffer(temperatureString.data(), 
+                                           temperatureString.size()));        
  
         // Customer Requirement:
         //
@@ -99,7 +98,7 @@ private:
 class SensorNodeServer
 {
 public:
-    SensorNodeServer(boost::asio::io_context& io_context, short port)
+    SensorNodeServer(asio::io_context& io_context, short port)
         : m_Acceptor(io_context, tcp::endpoint(tcp::v4(), port))
         , m_PortNumber(port)
     {
@@ -113,7 +112,7 @@ private:
         std::cout << "Waiting to accept TCP connections... \n";
 
         m_Acceptor.async_accept(
-            [this](boost::system::error_code ec, tcp::socket socket)
+            [this](std::error_code ec, tcp::socket socket)
             {
                 if (!ec)
                 {
@@ -123,7 +122,10 @@ private:
                     // temporary paradigm is unsafe due to object lifetimes,
                     // and only works here because technically Start() is
                     // recursive and we never return. Fix it!
-                    std::make_shared<TCPSession>(std::move(socket))->Start();
+                    //std::make_shared<TCPSession>(std::move(socket))->Start();
+                    
+                    auto theSession = std::make_shared<TCPSession>(std::move(socket));
+                    theSession->Start();
                 }
 
                 DoAccept();
@@ -145,7 +147,7 @@ int main(int argc, char* argv[])
         }
 
         std::cout << "Spawning boost::asio::io_context... \n";
-        boost::asio::io_context io_context;
+        asio::io_context io_context;
         SensorNodeServer s(io_context, std::atoi(argv[1]));
 
         io_context.run();

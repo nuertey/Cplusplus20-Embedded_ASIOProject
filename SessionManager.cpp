@@ -170,8 +170,9 @@ void SessionManager::ReceiveTemperatureData(SensorNode_t& sensor)
     // and sequentially per sensor node socket.
     
     // Use an ad-hoc lambda completion handler for asynchronous operation.
-    sensor.m_pConnectionSocket->async_receive(boost::asio::buffer(sensor.m_TcpData),
-                         [&](boost::system::error_code const &error, std::size_t length)
+    // & (implicitly capture the used automatic variables by reference).
+    sensor.m_pConnectionSocket->async_receive(asio::buffer(sensor.m_TcpData),
+                         [&](std::error_code const &error, std::size_t length)
     {
         if (!error)
         {
@@ -189,9 +190,9 @@ void SessionManager::ReceiveTemperatureData(SensorNode_t& sensor)
             // readout display method on the worker thread context so that
             // we can safely lock the display mutex before attempting to
             // display. Without this precaution, we might deadlock.
-            boost::asio::post(Common::g_DispatcherIOContext, 
-                    std::bind(&SessionManager::DisplayTemperatureData,
-                    this));
+            asio::post(Common::g_DispatcherIOContext, 
+                       std::bind(&SessionManager::DisplayTemperatureData,
+                       this));
         }
         else
         {

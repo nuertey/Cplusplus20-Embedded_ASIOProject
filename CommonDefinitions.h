@@ -48,22 +48,24 @@
 #include <asio.hpp>
 
 // The C++ Standard Template Libraries (STL):
-#include <type_traits>
-#include <algorithm>
-#include <functional>                                                                                                    
-#include <stdexcept>
-#include <iostream>
-#include <iomanip>
-#include <cstdint>
-#include <cstddef>
-#include <cstring>
-#include <cstdlib>
-#include <utility>
+//#include <type_traits>
+//#include <algorithm>
+//                                                                                                  
+//#include <cstdint>
+//#include <cstddef>
+//#include <cstring>
+//#include <cstdlib>
+
+#include <chrono>
 #include <string>
 #include <memory>
-#include <chrono>
-#include <array>
+#include <utility>
+#include <iomanip>
+#include <iostream>
+#include <stdexcept>
+#include <functional>
 #include <string_view>
+#include <system_error>
 
 // Non-Standard Headers:
 #include "Threading.h"
@@ -76,8 +78,13 @@ using Minutes_t     = std::chrono::minutes;
 using asio::buffer;
 using asio::ip::tcp;
 
-// Application 'and' sensor nodes are all being tested on my laptop, i.e.
-// localhost.
+// Application 'and' sensor nodes are all being tested on my laptop, 
+// i.e. localhost. 
+//
+// Note that a string_view is a string-like object that acts as an 
+// immutable, non-owning reference to any sequence of char objects. We
+// need string_view here because C++17 does NOT support std::string in
+// constexpr. C++20 though, does.
 static constexpr std::string_view SENSOR_NODE_STATIC_IP = "127.0.0.1";
 
 static constexpr uint32_t MAXIMUM_TCP_DATA_LENGTH = 87380;

@@ -27,6 +27,7 @@
 #pragma once
 
 #include <mutex>
+#include <array>
 #include <thread>
 #include <optional>
 #include "CommonDefinitions.h"
