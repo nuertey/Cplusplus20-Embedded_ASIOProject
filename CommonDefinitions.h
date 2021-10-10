@@ -95,6 +95,14 @@ static constexpr uint8_t MINIMUM_DISPLAY_INTERVAL_SECONDS = 1;
 // displayed temperature."
 static constexpr uint8_t STALE_READING_DURATION_MINUTES = 10;
 
+// One thread and one io_context is all we need to successfully  
+// serialize all operations invoked from several asynchronous contexts.
+// Implicit in that one thread is an "implicit strand". Going forward,
+// should multiple threads be required, enabled and used, then an explicit
+// strand (i.e. asio::strand) will need to be declared and used to protect
+// and serialize operations to the io_context.
+static constexpr std::size_t DISPATCHER_THREAD_POOL_SIZE = 1;
+
 namespace Utility 
 {     
     // Global Random Number Generator (RNG).

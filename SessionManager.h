@@ -8,43 +8,37 @@
 *
 * @brief   
 * 
-* @note     Be aware that I have designed things in such a way that most 
+* @note     Be aware that I have designed things in such a way that most
 *           of the socket operations that occur within this module will 
-*           happen asynchronously. Asynchronicity is the Mother of Speed,
-*           Nimbleness and Responsiveness. The equivalent POSIX 
-*           networking I/O paradigm is epoll().
+*           occur asynchronously. 
+* 
+*           Asynchronicity is the Mother of Speed, Nimbleness and 
+*           Responsiveness. 
+* 
+*           To sate thy righteous Curiosity, the POSIX networking I/O 
+*           paradigm that  would be equivalent to ASIO would be epoll().
 *
 * @warning  
 *
 * @author  Nuertey Odzeyem
 * 
-* @date    October 6, 2021
+* @date    October 10, 2021
 ***********************************************************************/
 #pragma once
 
-#include <boost/asio.hpp>
-#include <boost/bind/bind.hpp>
-#include <boost/asio/io_context.hpp>
-#include <boost/optional.hpp>
-
 #include <mutex>
-#include <future>
 #include <thread>
-#include <vector> // TBD Nuertey Odzeyem on a strictly embedded system, 
-                  // I would have used std::array instead of vector here.
-                  
+#include <optional>
 #include "CommonDefinitions.h"
 
 namespace Common
 {
-    using VoidFuture_t = std::future<void>;
-    using ExecutorWorkGuard_t = boost::asio::executor_work_guard<boost::asio::io_context::executor_type>;
-    
-    extern const std::size_t  DISPATCHER_THREAD_POOL_SIZE;
+    using ThreadPack_t        = std::array<std::thread, DISPATCHER_THREAD_POOL_SIZE>;
+    using ExecutorWorkGuard_t = asio::executor_work_guard<asio::io_context::executor_type>;
 
-    extern boost::asio::io_context               g_DispatcherIOContext;
-    extern boost::optional<ExecutorWorkGuard_t > g_DispatcherWork;
-    extern std::vector<std::thread>              g_DispatcherWorkerThreads;
+    extern asio::io_context                     g_DispatcherIOContext;
+    extern std::optional<ExecutorWorkGuard_t>   g_DispatcherWork;
+    extern ThreadPack_t                         g_DispatcherWorkerThreads;
 
     void SetupIOContext();
     void RunWorkerThreads();

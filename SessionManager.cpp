@@ -2,17 +2,9 @@
 
 namespace Common
 {
-    // One thread and one io_context is all we need to successfully  
-    // serialize all operations invoked from several asynchronuous 
-    // contexts. Implicit in that one thread is an "implicit strand". 
-    // Going forward, should multiple threads be required, enabled and used,
-    // then an explicit strand (i.e. boost::asio::strand) will need to be 
-    // declared and used to protect and serialize operations to the io_context.
-    const std::size_t   DISPATCHER_THREAD_POOL_SIZE = 1;
-
-    boost::asio::io_context                g_DispatcherIOContext;
-    boost::optional<ExecutorWorkGuard_t >  g_DispatcherWork = boost::none;
-    std::vector<std::thread>               g_DispatcherWorkerThreads;
+    asio::io_context                     g_DispatcherIOContext;
+    std::optional<ExecutorWorkGuard_t>   g_DispatcherWork = boost::none;
+    ThreadPack_t                         g_DispatcherWorkerThreads;
 
     void SetupIOContext()
     {
@@ -198,7 +190,7 @@ void SessionManager::ReceiveTemperatureData(SensorNode_t& sensor)
             // we can safely lock the display mutex before attempting to
             // display. Without this precaution, we might deadlock.
             boost::asio::post(Common::g_DispatcherIOContext, 
-                    boost::bind(&SessionManager::DisplayTemperatureData,
+                    std::bind(&SessionManager::DisplayTemperatureData,
                     this));
         }
         else
