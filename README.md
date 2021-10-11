@@ -407,19 +407,22 @@ Temperature Readout Application. Issue the following command:
             -26.7 °C
     
             27.9 °C
-            
+```
+3. The algorithm should then begin accepting temperature readings and 
+exercising the business logic to display to the user per the customer 
+requirements. Examine each relevant terminal (especially the Temperature
+Readout Application) for the appropriate output.
+
+To terminate the application, use 'ctrl-\' per the last note below.
+
+```            
 ^\[WARN] Signal Received: Closing application orderly, cleanly and gracefully.
 
         --.- °C
 ^Z
 [4]+  Stopped                 ./build/TemperatureReadoutApplication
 
-
 ```
-4. The algorithm should then begin accepting temperature readings and 
-exercising the business logic to display to the user per the customer 
-requirements. Examine each relevant terminal (especially the Temperature
-Readout Application) for the appropriate output.
 
 ## EXECUTION OUTPUT WITH 4 TEMPERATURE SENSOR NODES:
 
