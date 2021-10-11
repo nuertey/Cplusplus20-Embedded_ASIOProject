@@ -145,7 +145,7 @@ using SensorPack_t = std::array<SensorNode_t, 4>;
         
         // All operations to occur on ALL the socket connections will
         // occur asynchronously but in the same worker thread context 
-        // and on the same Boost.Asio io_context. Asynchronicity will
+        // and on the same ASIO io_context. Asynchronicity will
         // guarantee us the fastest most nimble response. i.e. realtime.
         m_TheCustomerSensors[i].m_pConnectionSocket = std::make_unique<tcp::socket>(Common::g_DispatcherIOContext);
         
@@ -176,14 +176,14 @@ using SensorPack_t = std::array<SensorNode_t, 4>;
 The following sunburst class/object hierarchical diagrams further 
 illustrate the solution source code:
 
-![Parent Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/Sunburst_Plot-1.png?raw=true)
-![TemperatureReadoutApplication Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/Sunburst_Plot-5.png?raw=true)
-![Utility:: Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/Sunburst_Plot-6.png?raw=true)
-![SessionManager Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/Sunburst_Plot-7.png?raw=true)
-![Common:: Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/Sunburst_Plot-8.png?raw=true)
-![SensorPack_t Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/Sunburst_Plot-9.png?raw=true)
-![SensorNode_t Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/Sunburst_Plot-10.png?raw=true)
-![TcpData_t Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/Sunburst_Plot-11.png?raw=true)
+![Parent Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/ASIO_Diagrams/Sunburst_Plot-1.png?raw=true)
+![TemperatureReadoutApplication Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/ASIO_Diagrams/Sunburst_Plot-5.png?raw=true)
+![Utility:: Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/ASIO_Diagrams/Sunburst_Plot-6.png?raw=true)
+![SessionManager Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/ASIO_Diagrams/Sunburst_Plot-7.png?raw=true)
+![Common:: Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/ASIO_Diagrams/Sunburst_Plot-8.png?raw=true)
+![SensorPack_t Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/ASIO_Diagrams/Sunburst_Plot-9.png?raw=true)
+![SensorNode_t Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/ASIO_Diagrams/Sunburst_Plot-10.png?raw=true)
+![TcpData_t Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/ASIO_Diagrams/Sunburst_Plot-11.png?raw=true)
 
 ## TESTING DEFINITIONS:
 ```c++
@@ -215,10 +215,10 @@ enum class SensorMode_t : uint8_t
 The following sunburst class/object hierarchical diagrams further 
 illustrate the Test Artifact source code:
 
-![Parent Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/Sunburst_Plot-1.png?raw=true)
-![TestArtifactSensorNode Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/Sunburst_Plot-2.png?raw=true)
-![SensorNodeServer Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/Sunburst_Plot-3.png?raw=true)
-![TCPSession Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/Sunburst_Plot-4.png?raw=true)
+![Parent Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/ASIO_Diagrams/Sunburst_Plot-1.png?raw=true)
+![TestArtifactSensorNode Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/ASIO_Diagrams/Sunburst_Plot-2.png?raw=true)
+![SensorNodeServer Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/ASIO_Diagrams/Sunburst_Plot-3.png?raw=true)
+![TCPSession Sunburst Diagram](https://github.com/nuertey/RandomArtifacts/blob/master/ASIO_Diagrams/Sunburst_Plot-4.png?raw=true)
 
 ## TESTING ASSUMPTIONS:
 
