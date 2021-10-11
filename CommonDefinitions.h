@@ -79,6 +79,15 @@ using asio::ip::tcp;
 // constexpr. C++20 though, does.
 static constexpr std::string_view SENSOR_NODE_STATIC_IP = "127.0.0.1";
 
+// Customer Requirement:
+//
+// "Also assume that the number of nodes is known at compile time, ..."
+//
+// Assume some default number of sensor nodes then. Feel free though to 
+// change the number of sensor nodes when instantiating the template
+// for different unit test scenarios.
+static constexpr uint8_t NUMBER_OF_SENSOR_NODES = 4;
+
 static constexpr uint32_t MAXIMUM_TCP_DATA_LENGTH = 87380;
 
 // Customer Requirement:

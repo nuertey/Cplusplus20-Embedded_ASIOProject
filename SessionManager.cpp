@@ -9,7 +9,20 @@ namespace Common
 
     void SetupIOContext()
     {
-        g_DispatcherWork.emplace(asio::make_work_guard(g_DispatcherIOContext));
+        //g_DispatcherWork.emplace(asio::make_work_guard(g_DispatcherIOContext));
+        
+        // Stopping the io_context from running out of work
+        //
+        // Some applications may need to prevent an io_context object's 
+        // run() call from returning when there is no more work to do. 
+        // For example, the io_context may be being run in a background 
+        // thread that is launched prior to the application's asynchronous
+        // operations. The run() call may be kept running by creating an
+        // executor that tracks work against the io_context:
+        g_DispatcherWork.emplace(
+                     asio::require(g_DispatcherIOContext.get_executor(),
+                     asio::execution::outstanding_work.tracked)
+                     );
     }
 
     void RunWorkerThreads()
@@ -43,13 +56,19 @@ namespace Common
 
     void DestroyWorkerThreads()
     {
+        // Alternatively, if the application requires that all operations
+        // and handlers be allowed to finish normally, ensure to store
+        // the work-tracking executor in an any_io_executor object, so 
+        // that it may be explicitly reset:
+        g_DispatcherWork = ExecutorWorkGuard_t(); // Allow run() to exit.
+        
         // If the application requires that all operations and handlers 
         // be allowed to finish normally, the work object may be explicitly
         // destroyed:
         
         // Allow io_context.run() to naturally and gracefully exit.
         // Work guard is destroyed, io_context::run is free to return.
-        g_DispatcherWork.reset(); 
+        //g_DispatcherWork.reset(); 
         
         // To effect a shutdown, the application will then need to call 
         // the io_context object's stop() member method. This will cause

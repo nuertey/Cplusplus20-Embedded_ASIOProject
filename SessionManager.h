@@ -35,7 +35,23 @@
 namespace Common
 {
     using ThreadPack_t        = std::array<std::thread, DISPATCHER_THREAD_POOL_SIZE>;
-    using ExecutorWorkGuard_t = asio::executor_work_guard<asio::io_context::executor_type>;
+    //using ExecutorWorkGuard_t = asio::executor_work_guard<asio::io_context::executor_type>;
+    
+    // any_io_executor is a type-erasing executor wrapper. 
+    //
+    // execution::any_executor class template can be parameterized as 
+    // follows:
+    //
+    // @code execution::any_executor<
+    //   execution::context_as_t<execution_context&>,
+    //   execution::blocking_t::never_t,
+    //   execution::prefer_only<execution::blocking_t::possibly_t>,
+    //   execution::prefer_only<execution::outstanding_work_t::tracked_t>,
+    //   execution::prefer_only<execution::outstanding_work_t::untracked_t>,
+    //   execution::prefer_only<execution::relationship_t::fork_t>,
+    //   execution::prefer_only<execution::relationship_t::continuation_t>
+    // > @endcode
+    using ExecutorWorkGuard_t = asio::any_io_executor;
 
     extern asio::io_context                     g_DispatcherIOContext;
     extern std::optional<ExecutorWorkGuard_t>   g_DispatcherWork;
@@ -108,6 +124,8 @@ struct SensorNode_t
         : m_Host()
         , m_Port()
         , m_pConnectionSocket(nullptr)
+        , m_SensorMutex()
+        , m_IsConnected(false)
         , m_TcpData()
         , m_CurrentReadingTime()
         {
@@ -118,19 +136,14 @@ struct SensorNode_t
     std::string                   m_Host; // TCP host.
     std::string                   m_Port; // TCP port number.
     std::unique_ptr<tcp::socket>  m_pConnectionSocket;
+    std::mutex                    m_SensorMutex;
+    bool                          m_IsConnected;
     TcpData_t                     m_TcpData;
     std::string                   m_CurrentTemperatureReading;
     SystemClock_t::time_point     m_CurrentReadingTime;
 };
 
-// Customer Requirement:
-//
-// "Also assume that the number of nodes is known at compile time, ..."
-
-// Assume some default number of sensor nodes. Feel free though to 
-// change the number of sensor nodes when instantiating the template
-// for different test scenarios.
-using SensorPack_t = std::array<SensorNode_t, 4>;
+using SensorPack_t = std::array<SensorNode_t, NUMBER_OF_SENSOR_NODES>;
 
 class SessionManager : public std::enable_shared_from_this<SessionManager>
 {
