@@ -413,7 +413,7 @@ exercising the business logic to display to the user per the customer
 requirements. Examine each relevant terminal (especially the Temperature
 Readout Application) for the appropriate output.
 
-To terminate the application, use 'ctrl-\' per the last note below.
+To terminate the application, use 'ctrl-\\' per the last note below.
 
 ```            
 ^\[WARN] Signal Received: Closing application orderly, cleanly and gracefully.
