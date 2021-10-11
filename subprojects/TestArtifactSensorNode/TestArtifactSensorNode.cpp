@@ -146,7 +146,7 @@ int main(int argc, char* argv[])
             return 1;
         }
 
-        std::cout << "Spawning boost::asio::io_context... \n";
+        std::cout << "Spawning asio::io_context... \n";
         asio::io_context io_context;
         SensorNodeServer s(io_context, std::atoi(argv[1]));
 
