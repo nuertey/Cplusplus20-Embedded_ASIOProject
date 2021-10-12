@@ -500,7 +500,8 @@ To terminate the application, use 'ctrl-\\' per the last note below.
 
 ```
 
-## EXECUTION OUTPUT WITH NO TEMPERATURE SENSOR NODES RUNNING
+## EXCEPTION SCENARIO - EXECUTION OUTPUT WITH NO TEMPERATURE SENSOR NODES
+## RUNNING
 
 ```
 ./build/TemperatureReadoutApplication
@@ -562,6 +563,106 @@ Code: 111
 
         --.- °C
 [WARN] : Exiting Dispatcher Worker Thread WorkerThread_ps
+```
+
+## EXCEPTION SCENARIO - EXECUTION OUTPUT WITH 4 TEMPERATURE SENSOR NODES
+## BUT 1 IS OUT OF SERVICE/POWERED DOWN:
+
+SENSOR 1:
+```
+./build/TestArtifactSensorNode 5000
+
+Spawning asio::io_context... 
+Constructing SensorNodeServer listening on port... [5000]
+Waiting to accept TCP connections... 
+TCP session established with TemperatureReadoutApplication on port :-> 5000.
+Constructing TCP Session... 
+About to send temperature reading to TemperatureReadoutApplication... 
+About to send temperature reading to TemperatureReadoutApplication... 
+About to send temperature reading to TemperatureReadoutApplication... 
+...
+```
+SENSOR 2:
+```
+./build/TestArtifactSensorNode 5001
+
+Spawning asio::io_context... 
+Constructing SensorNodeServer listening on port... [5001]
+Waiting to accept TCP connections... 
+TCP session established with TemperatureReadoutApplication on port :-> 5001.
+Constructing TCP Session... 
+About to send temperature reading to TemperatureReadoutApplication... 
+About to send temperature reading to TemperatureReadoutApplication... 
+About to send temperature reading to TemperatureReadoutApplication... 
+...
+```
+
+SENSOR 3:
+```
+./build/TestArtifactSensorNode 5002
+
+Spawning asio::io_context... 
+Constructing SensorNodeServer listening on port... [5002]
+Waiting to accept TCP connections... 
+TCP session established with TemperatureReadoutApplication on port :-> 5002.
+Constructing TCP Session... 
+About to send temperature reading to TemperatureReadoutApplication... 
+About to send temperature reading to TemperatureReadoutApplication... 
+About to send temperature reading to TemperatureReadoutApplication... 
+...
+```
+
+APPLICATION:
+```
+./build/TemperatureReadoutApplication
+
+        --.- °C
+[INFO] : Parent just created a thread.                ThreadName = WorkerThread_V0
+[DEBUG] Connecting to TCP endpoint :-> 127.0.0.1:5000
+[TRACE] Successfully connected to "127.0.0.1:5000"
+[DEBUG] Connecting to TCP endpoint :-> 127.0.0.1:5001
+[TRACE] Successfully connected to "127.0.0.1:5001"
+[DEBUG] Connecting to TCP endpoint :-> 127.0.0.1:5002
+[DEBUG] Connecting to TCP endpoint :-> 127.0.0.1:5003 
+[TRACE] Successfully connected to "127.0.0.1:5002"
+[ERROR] Failure in connecting to TCP socket:
+    127.0.0.1:5003
+    Value := "Code: 111
+        Category: asio.system
+        Message: Connection refused
+"
+[WARN] Giving up on connecting to:
+    "127.0.0.1:5003"
+    Value := "Exhausted resolved endpoints list!"
+
+[WARN] Ensure to a priori launch the sensor node test application(s).
+
+        -40.7 °C
+        27.6 °C
+        -8.5 °C
+        -41.4 °C
+        -12.6 °C
+        -47.3 °C
+        -6.0 °C
+        39.7 °C
+        -34.6 °C
+        -44.3 °C
+        40.0 °C
+```
+
+After killing all temperature sensor nodes:
+
+```
+[ERROR] Failure in reading from TCP socket connection:
+    127.0.0.1:5000
+    Value := "Code: 2
+        Category: asio.misc
+        Message: End of file
+"
+^C[WARN] Signal Received: Closing application orderly, cleanly and gracefully.
+
+        --.- °C
+[WARN] : Exiting Dispatcher Worker Thread WorkerThread_V0
 ```
 
 ## EXIT:
