@@ -111,40 +111,6 @@ namespace Common
     };
 }
 
-// Customer Requirement:
-//
-// "Each node has a static IP, listens on a port, accepts a connection,
-// and then sends the latest temperature reading, in deg C, on one line
-// of ascii text."
-using TcpData_t = std::array<char, MAXIMUM_TCP_DATA_LENGTH>;
-
-struct SensorNode_t
-{
-    SensorNode_t()
-        : m_Host()
-        , m_Port()
-        , m_pConnectionSocket(nullptr)
-        , m_SensorMutex()
-        , m_IsConnected(false)
-        , m_TcpData()
-        , m_CurrentReadingTime()
-        {
-        }
-        
-    virtual ~SensorNode_t(){}
-    
-    std::string                   m_Host; // TCP host.
-    std::string                   m_Port; // TCP port number.
-    std::unique_ptr<tcp::socket>  m_pConnectionSocket;
-    std::mutex                    m_SensorMutex;
-    bool                          m_IsConnected;
-    TcpData_t                     m_TcpData;
-    std::string                   m_CurrentTemperatureReading;
-    SystemClock_t::time_point     m_CurrentReadingTime;
-};
-
-using SensorPack_t = std::array<SensorNode_t, NUMBER_OF_SENSOR_NODES>;
-
 class SessionManager : public std::enable_shared_from_this<SessionManager>
 {
     static constexpr short EPHEMERAL_PORT_NUMBER_BASE_VALUE = 5000;
@@ -156,11 +122,15 @@ public:
     void Start();
 
 protected:
+    void StartConnect(const uint8_t& sensorNodeNumber);
+    void AsyncConnect(SensorNode_t& sensor, tcp::resolver::iterator& it);
+    void HandleConnect(const std::error_code& error, SensorNode_t& sensor,
+                       tcp::resolver::iterator& endpointIter);
     void ReceiveTemperatureData(SensorNode_t& sensor);
     void DisplayTemperatureData();
 
 private:
-    SensorPack_t                m_TheCustomerSensors;
+    uint8_t                     m_NumberOfConnectedSockets;
     std::mutex                  m_TheDisplayMutex;
     SystemClock_t::time_point   m_LastReadoutTime;
 };
