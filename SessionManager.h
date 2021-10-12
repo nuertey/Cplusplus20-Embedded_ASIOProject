@@ -123,10 +123,10 @@ public:
 
 protected:
     void StartConnect(const uint8_t& sensorNodeNumber);
-    void AsyncConnect(SensorNode_t& sensor, tcp::resolver::iterator& it);
-    void HandleConnect(const std::error_code& error, SensorNode_t& sensor,
+    void AsyncConnect(const uint8_t& sensorNodeNumber, tcp::resolver::iterator& it);
+    void HandleConnect(const std::error_code& error, const uint8_t& sensorNodeNumber,
                        tcp::resolver::iterator& endpointIter);
-    void ReceiveTemperatureData(SensorNode_t& sensor);
+    void ReceiveTemperatureData(const uint8_t& sensorNodeNumber);
     void DisplayTemperatureData();
 
 private:

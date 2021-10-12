@@ -111,68 +111,12 @@ using TcpData_t = std::array<char, MAXIMUM_TCP_DATA_LENGTH>;
 struct SensorNode_t
 {
     SensorNode_t()
-        : m_Host()
+        : m_Host(SENSOR_NODE_STATIC_IP) // Same test laptop, same LAN, same IP=localhost.
         , m_Port()
-        , m_ConnectionSocket(std::nullopt)
+        , m_ConnectionSocket(Common::g_DispatcherIOContext)
         , m_TcpData()
         , m_CurrentReadingTime()
     {
-    }
-    
-    SensorNode_t(const SensorNode_t& other)
-        : m_Host(other.m_Host)
-        , m_Port(other.m_Port)
-        , m_ConnectionSocket(std::nullopt)
-        , m_TcpData(std::move(other.m_TcpData))
-        , m_CurrentTemperatureReading(std::move(other.m_CurrentTemperatureReading))
-        , m_CurrentReadingTime(other.m_CurrentReadingTime)
-    {
-        //m_ConnectionSocket.emplace(std::move(*other.m_ConnectionSocket));
-        m_ConnectionSocket = std::move(*other.m_ConnectionSocket);
-    }
-    
-    SensorNode_t& operator=(const SensorNode_t& other)
-    {
-        if (this != &other) // not a self-assignment
-        {
-            m_Host = other.m_Host;
-            m_Port = other.m_Port;
-            //m_ConnectionSocket.emplace(std::move(*other.m_ConnectionSocket));
-            m_ConnectionSocket = std::move(*other.m_ConnectionSocket);
-            m_TcpData = std::move(other.m_TcpData);
-            m_CurrentTemperatureReading = std::move(other.m_CurrentTemperatureReading);
-            m_CurrentReadingTime = other.m_CurrentReadingTime;
-        }
-       
-        return *this;
-    }
-
-    SensorNode_t(SensorNode_t&& other) 
-        : m_Host(std::move(other.m_Host))
-        , m_Port(std::move(other.m_Port))
-        , m_ConnectionSocket(std::nullopt)
-        , m_TcpData(std::move(other.m_TcpData))
-        , m_CurrentTemperatureReading(std::move(other.m_CurrentTemperatureReading))
-        , m_CurrentReadingTime(std::move(other.m_CurrentReadingTime))
-    {
-        //m_ConnectionSocket.emplace(std::move(*other.m_ConnectionSocket));
-        m_ConnectionSocket = std::move(*other.m_ConnectionSocket);
-    }
-
-    SensorNode_t& operator=(SensorNode_t&& other)
-    {
-        if (this != &other) // not a self-assignment
-        {
-            m_Host = std::move(other.m_Host);
-            m_Port = std::move(other.m_Port);
-            //m_ConnectionSocket.emplace(std::move(*other.m_ConnectionSocket));
-            m_ConnectionSocket = std::move(*other.m_ConnectionSocket);
-            m_TcpData = std::move(other.m_TcpData);
-            m_CurrentTemperatureReading = std::move(other.m_CurrentTemperatureReading);
-            m_CurrentReadingTime = std::move(other.m_CurrentReadingTime);
-        }
-       
-        return *this;
     }
         
     virtual ~SensorNode_t()
@@ -189,35 +133,36 @@ struct SensorNode_t
 
 using SensorPack_t = std::array<SensorNode_t, NUMBER_OF_SENSOR_NODES>;
 
-SensorPack_t                g_TheCustomerSensors;
+// Also value-initialize all sensor node abstractions.
+static SensorPack_t g_TheCustomerSensors{};
 
 SessionManager::SessionManager()
-    : m_TheCustomerSensors()
-    , m_NumberOfConnectedSockets(0)
+    : m_NumberOfConnectedSockets(0)
     , m_TheDisplayMutex()
     , m_LastReadoutTime()
 {
-    // Initialize all sensor node abstractions.
-    for (size_t i = 0; i < m_TheCustomerSensors.size(); i++) 
+    // Initialize variable values for all sensor node abstractions.
+    for (size_t i = 0; i < g_TheCustomerSensors.size(); i++) 
     {
-        // Same test laptop, same LAN, same IP=localhost.
-        m_TheCustomerSensors[i].m_Host = SENSOR_NODE_STATIC_IP; 
-        
         // Use a different port for each sensor node.
-        m_TheCustomerSensors[i].m_Port = std::to_string(EPHEMERAL_PORT_NUMBER_BASE_VALUE + i);
+        g_TheCustomerSensors[i].m_Port = std::to_string(EPHEMERAL_PORT_NUMBER_BASE_VALUE + i);
         
         // All operations to occur on ALL the socket connections will
         // occur asynchronously but in the same worker thread context 
         // and on the same ASIO io_context. Asynchronicity will
         // guarantee us the fastest most nimble response. i.e. realtime.
-        m_TheCustomerSensors[i].m_ConnectionSocket.emplace(Common::g_DispatcherIOContext);
+        
+        // Note that since tcp::socket is not default constructible nor 
+        // assignable, we already explicitly constructed 
+        // g_TheCustomerSensors[i].m_ConnectionSocket as required in the
+        // SensorNode_t default constructor.
         
         // No temperature reading as yet.
-        m_TheCustomerSensors[i].m_TcpData = {}; // Initialize to zeros.
-        m_TheCustomerSensors[i].m_CurrentTemperatureReading = "";
+        g_TheCustomerSensors[i].m_TcpData = {}; // Initialize to zeros.
+        g_TheCustomerSensors[i].m_CurrentTemperatureReading = "";
         
         // Since no readings exist as yet, default all readings to stale.
-        m_TheCustomerSensors[i].m_CurrentReadingTime = SystemClock_t::now()
+        g_TheCustomerSensors[i].m_CurrentReadingTime = SystemClock_t::now()
                 - Minutes_t(STALE_READING_DURATION_MINUTES + 1);
     }
     
@@ -243,34 +188,34 @@ SessionManager::~SessionManager()
 void SessionManager::Start()
 {        
     // Attempt to connect to ALL the temperature sensor nodes.
-    for (auto& sensor : m_TheCustomerSensors)
+    for (size_t i = 0; i < g_TheCustomerSensors.size(); i++) 
     {
-        StartConnect(sensor);
+        StartConnect(i);
     }
 }
 
-void SessionManager::StartConnect(SensorNode_t& sensor)
+void SessionManager::StartConnect(const uint8_t& sensorNodeNumber)
 {   
     tcp::resolver resolver1(Common::g_DispatcherIOContext);
     tcp::resolver::query query1(tcp::v4(), 
-                                sensor.m_Host.c_str(), 
-                                sensor.m_Port.c_str());
+                                g_TheCustomerSensors[sensorNodeNumber].m_Host.c_str(), 
+                                g_TheCustomerSensors[sensorNodeNumber].m_Port.c_str());
     tcp::resolver::iterator destination1 = resolver1.resolve(query1);
 
     if (destination1 != asio::ip::tcp::resolver::iterator()) 
     {
-        AsyncConnect(sensor, destination1);
+        AsyncConnect(sensorNodeNumber, destination1);
     }   
     else
     {
         std::cout << "[ERROR] Could not resolve IP address query :-> " 
-                  << "\"" << sensor.m_Host.c_str()
-                  << ":"  << sensor.m_Port.c_str() << "\""
+                  << "\"" << g_TheCustomerSensors[sensorNodeNumber].m_Host.c_str()
+                  << ":"  << g_TheCustomerSensors[sensorNodeNumber].m_Port.c_str() << "\""
                   << std::endl;     
     }
 }
 
-void SessionManager::AsyncConnect(SensorNode_t& sensor, 
+void SessionManager::AsyncConnect(const uint8_t& sensorNodeNumber, 
                                   tcp::resolver::iterator& it)
 {
     using namespace std::placeholders;
@@ -279,7 +224,7 @@ void SessionManager::AsyncConnect(SensorNode_t& sensor,
     // with the appropriate C++ lambda captures on shared_ptr to self.
     auto self(shared_from_this());
     
-    if (!(sensor.m_ConnectionSocket->is_open()))
+    if (!g_TheCustomerSensors[sensorNodeNumber].m_ConnectionSocket.is_open())
     {
         tcp::endpoint endpoint1;
 
@@ -289,14 +234,15 @@ void SessionManager::AsyncConnect(SensorNode_t& sensor,
             std::cout << "[DEBUG] Connecting to TCP endpoint :-> " 
                       << endpoint1 << std::endl;
                       
-            sensor.m_ConnectionSocket->async_connect(endpoint1,
+            g_TheCustomerSensors[sensorNodeNumber].m_ConnectionSocket.async_connect(endpoint1,
                              std::bind(&SessionManager::HandleConnect,
-                                       this, _1, sensor, it));
+                                       this, _1, sensorNodeNumber, it));
         }
         else
         {
             std::cout << "[WARN] Giving up on connecting to:\n\t\"" 
-                      << sensor.m_Host << ":" << sensor.m_Port 
+                      << g_TheCustomerSensors[sensorNodeNumber].m_Host << ":" 
+                      << g_TheCustomerSensors[sensorNodeNumber].m_Port 
                       << "\"\n\tValue := \"" 
                       << "Exhausted resolved endpoints list!" << "\"\n";
 
@@ -307,7 +253,7 @@ void SessionManager::AsyncConnect(SensorNode_t& sensor,
 }
 
 void SessionManager::HandleConnect(const std::error_code& error, 
-                                   SensorNode_t& sensor,
+                                   const uint8_t& sensorNodeNumber,
                                    tcp::resolver::iterator& endpointIter)
 {
     // Stringently manage our object lifetime even through callbacks, 
@@ -320,7 +266,7 @@ void SessionManager::HandleConnect(const std::error_code& error,
         // at the start of the asynchronous operation. If for some reason
         // the socket was closed in the interim, then retry the next 
         // available endpoint for the same sensor. 
-        if (!(sensor.m_ConnectionSocket->is_open()))
+        if (!g_TheCustomerSensors[sensorNodeNumber].m_ConnectionSocket.is_open())
         {
             std::cout << "[ERROR] Failure in connecting to TCP socket:\n\t" 
                       << endpointIter->endpoint() 
@@ -328,7 +274,7 @@ void SessionManager::HandleConnect(const std::error_code& error,
                       << "Connection somehow timed out." << "\"\n";
 
             // Try the next available endpoint for the same sensor.
-            AsyncConnect(sensor, ++endpointIter);
+            AsyncConnect(sensorNodeNumber, ++endpointIter);
         }
         else
         {
@@ -348,7 +294,7 @@ void SessionManager::HandleConnect(const std::error_code& error,
             // requirements:
             
             // Attempt to asynchronously read this sensor.
-            ReceiveTemperatureData(sensor);
+            ReceiveTemperatureData(sensorNodeNumber);
         }
     }
     else
@@ -366,14 +312,14 @@ void SessionManager::HandleConnect(const std::error_code& error,
                   
         // We need to close the socket used in the previous connection
         // attempt before re-attempting to start a new one.
-        sensor.m_ConnectionSocket->close();
+        g_TheCustomerSensors[sensorNodeNumber].m_ConnectionSocket.close();
 
         // Try the next available endpoint for the same sensor.
-        AsyncConnect(sensor, ++endpointIter);
+        AsyncConnect(sensorNodeNumber, ++endpointIter);
     }
 }
 
-void SessionManager::ReceiveTemperatureData(SensorNode_t& sensor)
+void SessionManager::ReceiveTemperatureData(const uint8_t& sensorNodeNumber)
 {
     // Stringently manage our object lifetime even through callbacks, 
     // with the appropriate C++ lambda captures on shared_ptr to self.
@@ -385,20 +331,23 @@ void SessionManager::ReceiveTemperatureData(SensorNode_t& sensor)
     
     // Use an ad-hoc lambda completion handler for asynchronous operation.
     // & (implicitly capture the used automatic variables by reference).
-    sensor.m_ConnectionSocket->async_receive(asio::buffer(sensor.m_TcpData),
-                         [&](const std::error_code& error, std::size_t length)
+    g_TheCustomerSensors[sensorNodeNumber].m_ConnectionSocket.async_receive(
+         asio::buffer(g_TheCustomerSensors[sensorNodeNumber].m_TcpData),
+    [&](const std::error_code& error, std::size_t length)
     {
         if (!error)
         {
             // Debug prints...
-            //std::cout.write(sensor.m_TcpData.data(), length);
+            //std::cout.write(g_TheCustomerSensors[sensorNodeNumber].m_TcpData.data(), length);
             //std::cout << "\n\n";
             
             // This is the sensor temperature reading that we received.
-            sensor.m_CurrentTemperatureReading = std::string(sensor.m_TcpData.data(), length);
+            g_TheCustomerSensors[sensorNodeNumber].m_CurrentTemperatureReading
+              = std::string(g_TheCustomerSensors[sensorNodeNumber].m_TcpData.data(),
+                            length);
             
             // Note the time at which we received that sensor reading.
-            sensor.m_CurrentReadingTime = SystemClock_t::now();
+            g_TheCustomerSensors[sensorNodeNumber].m_CurrentReadingTime = SystemClock_t::now();
 
             // Escape the asynchronous context, and schedule/enter the
             // readout display method on the worker thread context so that
@@ -417,7 +366,9 @@ void SessionManager::ReceiveTemperatureData(SensorNode_t& sensor)
             oss << "\t\tMessage: " << error.message() << '\n';
 
             std::cout << "[ERROR] Failure in reading from TCP socket connection:\n\t" 
-                      << sensor.m_Host << ":" << sensor.m_Port 
+                      << g_TheCustomerSensors[sensorNodeNumber].m_Host 
+                      << ":" 
+                      << g_TheCustomerSensors[sensorNodeNumber].m_Port 
                       << "\n\tValue := \"" 
                       << oss.str() << "\"\n";
         }
@@ -438,7 +389,7 @@ void SessionManager::ReceiveTemperatureData(SensorNode_t& sensor)
         // Here then goes: 
         
         // ... Do not forget to set up asynchronous read handler again.
-        ReceiveTemperatureData(sensor);
+        ReceiveTemperatureData(sensorNodeNumber);
     });
 }
 
@@ -467,20 +418,20 @@ void SessionManager::DisplayTemperatureData()
         double averageTemperature = 0.0;
         auto count = 0;
         
-        for (const auto& sensor : m_TheCustomerSensors)
+        for (size_t i = 0; i < g_TheCustomerSensors.size(); i++) 
         {
             // Customer Requirement:
             //
             // "3. In case of intermittent communications, temperature readings older
             // than 10 minutes shall be considered stale and excluded from the 
             // displayed temperature."
-            if ((timeNow - sensor.m_CurrentReadingTime) 
+            if ((timeNow - g_TheCustomerSensors[i].m_CurrentReadingTime) 
                 < std::chrono::minutes(STALE_READING_DURATION_MINUTES))
             {
-                if (!sensor.m_CurrentTemperatureReading.empty())
+                if (!g_TheCustomerSensors[i].m_CurrentTemperatureReading.empty())
                 {
                     averageTemperature = averageTemperature + 
-                              std::stod(sensor.m_CurrentTemperatureReading);
+                      std::stod(g_TheCustomerSensors[i].m_CurrentTemperatureReading);
                     ++count;
                 }
             }
