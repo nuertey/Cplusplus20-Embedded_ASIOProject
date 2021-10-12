@@ -499,7 +499,71 @@ To terminate the application, use 'ctrl-\\' per the last note below.
 [4]+  Stopped                 ./build/TemperatureReadoutApplication
 
 ```
- 
+
+## EXECUTION OUTPUT WITH NO TEMPERATURE SENSOR NODES RUNNING
+
+```
+./build/TemperatureReadoutApplication
+        --.- °C
+[INFO] : Parent just created a thread.                ThreadName = WorkerThread_ps
+[DEBUG] Connecting to TCP endpoint :-> 127.0.0.1:5000
+[DEBUG] Connecting to TCP endpoint :-> 127.0.0.1:5001
+[ERROR] Failure in connecting to TCP socket:
+    127.0.0.1:5000
+    Value := "Code: 111
+        Category: asio.system
+        Message: Connection refused
+"
+[DEBUG] Connecting to TCP endpoint :-> 127.0.0.1:5002
+[WARN] Giving up on connecting to:
+    "127.0.0.1:5000"
+    Value := "Exhausted resolved endpoints list!"
+
+[WARN] Ensure to a priori launch the sensor node test application(s).
+
+[ERROR] Failure in connecting to TCP socket:
+    [DEBUG] Connecting to TCP endpoint :-> 127.0.0.1:5001
+    Value := "127.0.0.1:5003
+Code: 111
+        Category: asio.system
+        Message: Connection refused
+"
+[WARN] Giving up on connecting to:
+    "127.0.0.1:5001"
+    Value := "Exhausted resolved endpoints list!"
+
+[WARN] Ensure to a priori launch the sensor node test application(s).
+
+[ERROR] Failure in connecting to TCP socket:
+    127.0.0.1:5002
+    Value := "Code: 111
+        Category: asio.system
+        Message: Connection refused
+"
+[WARN] Giving up on connecting to:
+    "127.0.0.1:5002"
+    Value := "Exhausted resolved endpoints list!"
+
+[WARN] Ensure to a priori launch the sensor node test application(s).
+
+[ERROR] Failure in connecting to TCP socket:
+    127.0.0.1:5003
+    Value := "Code: 111
+        Category: asio.system
+        Message: Connection refused
+"
+[WARN] Giving up on connecting to:
+    "127.0.0.1:5003"
+    Value := "Exhausted resolved endpoints list!"
+
+[WARN] Ensure to a priori launch the sensor node test application(s).
+
+^C[WARN] Signal Received: Closing application orderly, cleanly and gracefully.
+
+        --.- °C
+[WARN] : Exiting Dispatcher Worker Thread WorkerThread_ps
+```
+
 ## EXIT:
 
 The application catches the following signals so either can be used to 

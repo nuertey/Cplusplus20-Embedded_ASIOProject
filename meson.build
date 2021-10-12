@@ -86,7 +86,7 @@ compiler_settings = [
     # and behaviour of ASIO can be found at:
     #
     # https://think-async.com/Asio/asio-1.19.2/doc/asio/using.html#asio.using.macros
-    '-DASIO_ENABLE_HANDLER_TRACKING'
+    #'-DASIO_ENABLE_HANDLER_TRACKING'
 ]
 
 add_project_arguments(cxx.get_supported_arguments(compiler_settings), language: 'cpp')
