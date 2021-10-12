@@ -70,6 +70,7 @@
 #include "spdlog/spdlog.h"
 #include "spdlog/fmt/fmt.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
+#include "spdlog/async.h" //support for async logging.
 
 using SystemClock_t = std::chrono::system_clock;
 using Seconds_t     = std::chrono::seconds;
@@ -154,13 +155,21 @@ namespace Utility
 
     inline void InitializeLogger()
     {
-        // Multi-threaded console logger (with color support)
-        g_ConsoleLogger = spdlog::stdout_color_mt("console");
+        if (!g_ConsoleLogger)
+        {
+            // Multi-threaded console logger (with color support)
+            //g_ConsoleLogger = spdlog::stdout_color_mt("console");
+            
+            //                spdlog::stdout_color_mt<spdlog::async_factory>
+            //            (const std::string &logger_name);
+            g_ConsoleLogger = spdlog::stdout_color_mt<spdlog::async_factory>
+                          ("async_file_logger");
 
-        spdlog::set_level(spdlog::level::trace); // Set global log level
+            spdlog::set_level(spdlog::level::trace); // Set global log level
 
-        // Customize msg format for all messages
-        spdlog::set_pattern("%H:%M:%S %z - %^%l%$ - %^[thread %t = %q]%$ -> %v");
+            // Customize msg format for all messages
+            spdlog::set_pattern("%H:%M:%S %z - %^%l%$ - %^[thread %t = %q]%$ -> %v");
+        }
     }
 
     // Global Random Number Generator (RNG).

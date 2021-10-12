@@ -223,6 +223,12 @@ void SessionManager::AsyncConnect(const uint8_t& sensorNodeNumber,
     // with the appropriate C++ lambda captures on shared_ptr to self.
     auto self(shared_from_this());
     
+    // In truly asynchronous contexts, we must always invoke this
+    // method as a safety check before logging. This will ensure that
+    // the logger shared_ptr is initialized properly if it does not
+    // exist, before attempting to dereference it.
+    Utility::InitializeLogger();
+    
     if (!g_TheCustomerSensors[sensorNodeNumber].m_ConnectionSocket.is_open())
     {
         tcp::endpoint endpoint1;
@@ -256,6 +262,12 @@ void SessionManager::HandleConnect(const std::error_code& error,
     // Stringently manage our object lifetime even through callbacks, 
     // with the appropriate C++ lambda captures on shared_ptr to self.
     auto self(shared_from_this());
+    
+    // In truly asynchronous contexts, we must always invoke this
+    // method as a safety check before logging. This will ensure that
+    // the logger shared_ptr is initialized properly if it does not
+    // exist, before attempting to dereference it.
+    Utility::InitializeLogger();
     
     if (!error)
     {
@@ -319,6 +331,12 @@ void SessionManager::ReceiveTemperatureData(const uint8_t& sensorNodeNumber)
     // with the appropriate C++ lambda captures on shared_ptr to self.
     auto self(shared_from_this());
     
+    // In truly asynchronous contexts, we must always invoke this
+    // method as a safety check before logging. This will ensure that
+    // the logger shared_ptr is initialized properly if it does not
+    // exist, before attempting to dereference it.
+    Utility::InitializeLogger();
+    
     // Note that though asio::ip::tcp::socket is NOT thread safe,
     // we are guaranteed safe operation as we are receiving asynchronously
     // and sequentially per sensor node socket.
@@ -329,6 +347,12 @@ void SessionManager::ReceiveTemperatureData(const uint8_t& sensorNodeNumber)
          asio::buffer(g_TheCustomerSensors[sensorNodeNumber].m_TcpData),
     [&](const std::error_code& error, std::size_t length)
     {
+        // In truly asynchronous contexts, we must always invoke this
+        // method as a safety check before logging. This will ensure that
+        // the logger shared_ptr is initialized properly if it does not
+        // exist, before attempting to dereference it.
+        Utility::InitializeLogger();
+        
         if (!error)
         {
             // Debug prints...
