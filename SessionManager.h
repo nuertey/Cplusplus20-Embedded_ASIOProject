@@ -78,8 +78,8 @@ namespace Common
         char myThreadName[Utility::RECOMMENDED_BUFFER_SIZE];
         Utility::SetThreadName(uniqueName.c_str());
         Utility::GetThreadName(myThreadName, sizeof(myThreadName));
-
-        Utility::g_ConsoleLogger->info("Parent just created a thread. ThreadName = {0}", myThreadName);
+        std::cout << "[INFO] : Parent just created a thread. \
+               ThreadName = " << myThreadName << "\n";
 
         // TBD Nuertey Odzeyem; were I truly compiling on an Embedded
         // system, I would have optimized these C++ exceptions completely
@@ -103,10 +103,11 @@ namespace Common
         }
         catch (const std::exception& e)
         {
-            Utility::g_ConsoleLogger->error("Caught an exception! {0}", e.what());
+            std::cout << "[ERROR] : Caught an exception! " << e.what() << "\n";
         }
 
-        Utility::g_ConsoleLogger->warn("Exiting Dispatcher Worker Thread {0}", myThreadName);
+        std::cout << "[WARN] : Exiting Dispatcher Worker Thread "
+                  << myThreadName << "\n";
     };
 }
 

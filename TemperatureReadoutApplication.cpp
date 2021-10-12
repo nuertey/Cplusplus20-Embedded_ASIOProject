@@ -5,8 +5,6 @@ void terminator(int signalNumber);
 
 int main([[maybe_unused]]int argc, [[maybe_unused]]char* argv[])
 {
-    Utility::InitializeLogger();
-    
     // Setup and run the one worker thread and one io_context that we 
     // need to successfully serialize all operations expected from the 
     // potentially several asynchronous socket instances. See the C++
@@ -47,9 +45,6 @@ int main([[maybe_unused]]int argc, [[maybe_unused]]char* argv[])
     // ready to exit.
     Common::JoinWorkerThreads();
     
-    // Release and close all loggers
-    spdlog::drop_all();
-    
     return 0;
 }
 
@@ -57,7 +52,7 @@ void terminator(int signalNumber)
 {
     if ((SIGTERM == signalNumber) || (SIGINT == signalNumber) || (SIGQUIT == signalNumber))
     {
-        Utility::g_ConsoleLogger->warn("\nSignal Received. Closing application orderly, cleanly and gracefully.\n\n");
+        std::cout << "[WARN] Signal Received: Closing application orderly, cleanly and gracefully." << "\n\n";
         
         // This call is designed to be thread-safe so go ahead and invoke
         // it from the asynchronous signal context.

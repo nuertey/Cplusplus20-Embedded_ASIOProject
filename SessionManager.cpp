@@ -50,7 +50,7 @@ namespace Common
         }
         catch (const std::exception& e)
         {
-            Utility::g_ConsoleLogger->error("Caught an exception! {0}", e.what());
+            std::cout << "[ERROR] : Caught an exception! " << e.what() << "\n";
         }
     }
 
@@ -208,9 +208,10 @@ void SessionManager::StartConnect(const uint8_t& sensorNodeNumber)
     }   
     else
     {
-        Utility::g_ConsoleLogger->error("Could not resolve IP address query :-> \"{0}:{1}\"",
-                 g_TheCustomerSensors[sensorNodeNumber].m_Host.c_str(),
-                 g_TheCustomerSensors[sensorNodeNumber].m_Port.c_str());
+        std::cout << "[ERROR] Could not resolve IP address query :-> " 
+                  << "\"" << g_TheCustomerSensors[sensorNodeNumber].m_Host.c_str()
+                  << ":"  << g_TheCustomerSensors[sensorNodeNumber].m_Port.c_str() << "\""
+                  << std::endl;     
     }
 }
 
@@ -230,8 +231,8 @@ void SessionManager::AsyncConnect(const uint8_t& sensorNodeNumber,
         if (it != asio::ip::tcp::resolver::iterator()) 
         {
             endpoint1 = *it;
-            Utility::g_ConsoleLogger->debug("Connecting to TCP endpoint :-> {0}",
-                 endpoint1);
+            std::cout << "[DEBUG] Connecting to TCP endpoint :-> " 
+                      << endpoint1 << std::endl;
                       
             g_TheCustomerSensors[sensorNodeNumber].m_ConnectionSocket.async_connect(endpoint1,
                              std::bind(&SessionManager::HandleConnect,
@@ -239,12 +240,14 @@ void SessionManager::AsyncConnect(const uint8_t& sensorNodeNumber,
         }
         else
         {
-            Utility::g_ConsoleLogger->warn("Giving up on connecting to:\n\t\"{0}:{1}\"\n\tValue := \"{2}\"",
-                 g_TheCustomerSensors[sensorNodeNumber].m_Host,
-                 g_TheCustomerSensors[sensorNodeNumber].m_Port,
-                 std::string("Exhausted resolved endpoints list!"));
-          
-            Utility::g_ConsoleLogger->warn("Ensure to a priori launch the sensor node test application(s).");
+            std::cout << "[WARN] Giving up on connecting to:\n\t\"" 
+                      << g_TheCustomerSensors[sensorNodeNumber].m_Host << ":" 
+                      << g_TheCustomerSensors[sensorNodeNumber].m_Port 
+                      << "\"\n\tValue := \"" 
+                      << "Exhausted resolved endpoints list!" << "\"\n";
+
+            std::cout << "\n[WARN] Ensure to a priori launch the sensor node test application(s).\n" 
+                      << std::endl;
         }
     }   
 }
@@ -265,9 +268,10 @@ void SessionManager::HandleConnect(const std::error_code& error,
         // available endpoint for the same sensor. 
         if (!g_TheCustomerSensors[sensorNodeNumber].m_ConnectionSocket.is_open())
         {
-            Utility::g_ConsoleLogger->error("Failure in connecting to TCP socket:\n\t{0}\n\tValue := \"{1}\"",
-                 endpointIter->endpoint(),
-                 std::string("Connection somehow timed out."));
+            std::cout << "[ERROR] Failure in connecting to TCP socket:\n\t" 
+                      << endpointIter->endpoint() 
+                      << "\n\tValue := \"" 
+                      << "Connection somehow timed out." << "\"\n";
 
             // Try the next available endpoint for the same sensor.
             AsyncConnect(sensorNodeNumber, ++endpointIter);
@@ -275,13 +279,14 @@ void SessionManager::HandleConnect(const std::error_code& error,
         else
         {
             // Otherwise we have successfully established a connection.
-            Utility::g_ConsoleLogger->trace("Successfully connected to \"{0}\"",
-                 endpointIter->endpoint());
+            std::cout << "[TRACE] Successfully connected to \"" 
+                      << endpointIter->endpoint() << "\"\n";
                       
             ++m_NumberOfConnectedSockets;
             if (NUMBER_OF_SENSOR_NODES == m_NumberOfConnectedSockets)
             {
-                Utility::g_ConsoleLogger->trace("ALL temperature sensor nodes have been successfully connected to.");
+                std::cout << "[TRACE] ALL temperature sensor nodes have been successfully connected to." 
+                          << std::endl;
             }
 
             // Proceed to reading temperature readings and exercising the
@@ -300,9 +305,10 @@ void SessionManager::HandleConnect(const std::error_code& error,
         oss << "\t\tCategory: " << error.category().name() << '\n';
         oss << "\t\tMessage: " << error.message() << '\n';
 
-        Utility::g_ConsoleLogger->error("Failure in connecting to TCP socket:\n\t{0}\n\tValue := \"{1}\"",
-             endpointIter->endpoint(),
-             oss.str());
+        std::cout << "[ERROR] Failure in connecting to TCP socket:\n\t" 
+                  << endpointIter->endpoint() 
+                  << "\n\tValue := \"" 
+                  << oss.str() << "\"\n";
                   
         // We need to close the socket used in the previous connection
         // attempt before re-attempting to start a new one.
@@ -332,8 +338,8 @@ void SessionManager::ReceiveTemperatureData(const uint8_t& sensorNodeNumber)
         if (!error)
         {
             // Debug prints...
-            //Utility::g_ConsoleLogger->debug("{0}\n",
-            //   std::string(g_TheCustomerSensors[sensorNodeNumber].m_TcpData.data(), length));
+            //std::cout.write(g_TheCustomerSensors[sensorNodeNumber].m_TcpData.data(), length);
+            //std::cout << "\n\n";
             
             // This is the sensor temperature reading that we received.
             g_TheCustomerSensors[sensorNodeNumber].m_CurrentTemperatureReading
@@ -359,10 +365,12 @@ void SessionManager::ReceiveTemperatureData(const uint8_t& sensorNodeNumber)
             oss << "\t\tCategory: " << error.category().name() << '\n';
             oss << "\t\tMessage: " << error.message() << '\n';
 
-            Utility::g_ConsoleLogger->error("Failure in reading from TCP socket connection:\n\t\"{0}:{1}\"\n\tValue := \"{2}\"",
-                 g_TheCustomerSensors[sensorNodeNumber].m_Host,
-                 g_TheCustomerSensors[sensorNodeNumber].m_Port,
-                 oss.str());
+            std::cout << "[ERROR] Failure in reading from TCP socket connection:\n\t" 
+                      << g_TheCustomerSensors[sensorNodeNumber].m_Host 
+                      << ":" 
+                      << g_TheCustomerSensors[sensorNodeNumber].m_Port 
+                      << "\n\tValue := \"" 
+                      << oss.str() << "\"\n";
         }
         
         // Customer Requirement:
@@ -434,11 +442,6 @@ void SessionManager::DisplayTemperatureData()
         // "2. The displayed temperature shall be the average temperature
         // computed from the latest readings from each node."
         averageTemperature = averageTemperature / count ;
-        
-        // You would then use it by creating a local instance of IosFlagSaver
-        // whenever you wanted to save the current flag state. When this instance
-        // goes out of scope, the flag state will be restored.
-        IosFlagSaver iosfs(std::cout);
         
         std::cout << "\t\t" << std::fixed << std::setprecision(1)
                   << averageTemperature << " °C" << "\n";

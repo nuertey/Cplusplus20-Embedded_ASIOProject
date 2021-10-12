@@ -284,8 +284,8 @@ range:
 - C++20
 - Linux POSIX Thread Library (libpthread)
 - ASIO (standalone version; no BOOST dependencies needed)
-- spdlog (for thread-safe exception logging)
-- fmt (spdlog dependency)
+- spdlog
+- fmt
  
 ## TESTED ENVIRONMENT:
 * Linux 4.10.0-28-generic 
@@ -609,61 +609,6 @@ About to send temperature reading to TemperatureReadoutApplication...
 About to send temperature reading to TemperatureReadoutApplication... 
 ...
 ```
-
-APPLICATION:
-```
-./build/TemperatureReadoutApplication
-
-        --.- °C
-[INFO] : Parent just created a thread.                ThreadName = WorkerThread_V0
-[DEBUG] Connecting to TCP endpoint :-> 127.0.0.1:5000
-[TRACE] Successfully connected to "127.0.0.1:5000"
-[DEBUG] Connecting to TCP endpoint :-> 127.0.0.1:5001
-[TRACE] Successfully connected to "127.0.0.1:5001"
-[DEBUG] Connecting to TCP endpoint :-> 127.0.0.1:5002
-[DEBUG] Connecting to TCP endpoint :-> 127.0.0.1:5003 
-[TRACE] Successfully connected to "127.0.0.1:5002"
-[ERROR] Failure in connecting to TCP socket:
-    127.0.0.1:5003
-    Value := "Code: 111
-        Category: asio.system
-        Message: Connection refused
-"
-[WARN] Giving up on connecting to:
-    "127.0.0.1:5003"
-    Value := "Exhausted resolved endpoints list!"
-
-[WARN] Ensure to a priori launch the sensor node test application(s).
-
-        -40.7 °C
-        27.6 °C
-        -8.5 °C
-        -41.4 °C
-        -12.6 °C
-        -47.3 °C
-        -6.0 °C
-        39.7 °C
-        -34.6 °C
-        -44.3 °C
-        40.0 °C
-```
-
-After killing all temperature sensor nodes:
-
-```
-[ERROR] Failure in reading from TCP socket connection:
-    127.0.0.1:5000
-    Value := "Code: 2
-        Category: asio.misc
-        Message: End of file
-"
-^C[WARN] Signal Received: Closing application orderly, cleanly and gracefully.
-
-        --.- °C
-[WARN] : Exiting Dispatcher Worker Thread WorkerThread_V0
-```
-
-## EXCEPTION SCENARIO - EXECUTION OUTPUT WITH 4 TEMPERATURE SENSOR NODES BUT 3 ARE OUT OF SERVICE/POWERED DOWN:
 
 APPLICATION:
 ```
