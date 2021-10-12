@@ -48,11 +48,13 @@
 #include <asio.hpp>
 
 // The C++ Standard Template Libraries (STL):
+#include <ios>
 #include <chrono>
 #include <string>
 #include <memory>
 #include <utility>
 #include <iomanip>
+#include <ostream>
 #include <iostream>
 #include <stdexcept>
 #include <functional>
@@ -62,6 +64,12 @@
 // Non-Standard Headers:
 #include "Threading.h"
 #include "randutils.hpp"
+
+// spdlog headers:
+#include "spdlog/fmt/bundled/ostream.h"
+#include "spdlog/spdlog.h"
+#include "spdlog/fmt/fmt.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
 
 using SystemClock_t = std::chrono::system_clock;
 using Seconds_t     = std::chrono::seconds;
@@ -111,8 +119,50 @@ static constexpr uint8_t STALE_READING_DURATION_MINUTES = 10;
 // and serialize operations to the io_context.
 static constexpr std::size_t DISPATCHER_THREAD_POOL_SIZE = 1;
 
+// Handy so we do NOT need to depend upon Boost: RAII class for restoring
+// the state of std::cout after manipulating it.
+// The big advantage to this technique is if you have multiple return
+// paths from a function that sets flags on an iostream. Whichever return
+// path is chosen, the destructor will always be called and the flags will
+// always be reset. There is no chance of forgetting to restore the flags
+// when the function returns.
+struct IosFlagSaver
+{
+    explicit IosFlagSaver(std::ostream& ostr)
+        : m_stream(ostr)
+        , m_flags(ostr.flags())
+    {
+    }
+    ~IosFlagSaver()
+    {
+        m_stream.flags(m_flags);
+    }
+
+    IosFlagSaver(const IosFlagSaver &rhs) = delete;
+    IosFlagSaver& operator= (const IosFlagSaver& rhs) = delete;
+
+private:
+    std::ostream&         m_stream;
+    std::ios::fmtflags    m_flags;
+};
+
 namespace Utility 
-{     
+{  
+    // Log exceptions/test output to the console but in a truly 
+    // thread-safe non-interleaved character way:
+    static std::shared_ptr<spdlog::logger>       g_ConsoleLogger;
+
+    inline void InitializeLogger()
+    {
+        // Multi-threaded console logger (with color support)
+        g_ConsoleLogger = spdlog::stdout_color_mt("console");
+
+        spdlog::set_level(spdlog::level::trace); // Set global log level
+
+        // Customize msg format for all messages
+        spdlog::set_pattern("%H:%M:%S %z - %^%l%$ - %^[thread %t = %q]%$ -> %v");
+    }
+
     // Global Random Number Generator (RNG).
     static thread_local randutils::mt19937_rng    gs_theRNG;
 
