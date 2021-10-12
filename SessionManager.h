@@ -67,9 +67,6 @@ namespace Common
     // not encountered during linking. 
     const auto DispatcherWorkerThread = []()
     {
-        // Safety check:
-        Utility::InitializeLogger();
-        
         // To aid debugging by means of strace, ps, valgrind, gdb, and
         // variants, name our created threads. 
         std::string namePrefix("WorkerThread_");
