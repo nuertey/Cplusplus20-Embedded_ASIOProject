@@ -82,7 +82,7 @@ namespace Common
         Utility::SetThreadName(uniqueName.c_str());
         Utility::GetThreadName(myThreadName, sizeof(myThreadName));
 
-        Utility::g_ConsoleLogger->info("Parent just created a thread. ThreadName = {0}", myThreadName);
+        Utility::GetSynchronousLogger()->info("Parent just created a thread. ThreadName = {0}", myThreadName);
 
         // TBD Nuertey Odzeyem; were I truly compiling on an Embedded
         // system, I would have optimized these C++ exceptions completely
@@ -106,12 +106,20 @@ namespace Common
         }
         catch (const std::exception& e)
         {
-            Utility::g_ConsoleLogger->error("Caught an exception! {0}", e.what());
+            Utility::GetSynchronousLogger()->error("Caught an exception! {0}", e.what());
         }
 
-        Utility::g_ConsoleLogger->warn("Exiting Dispatcher Worker Thread {0}", myThreadName);
+        Utility::GetSynchronousLogger()->warn("Exiting Dispatcher Worker Thread {0}", myThreadName);
     };
 }
+
+// Metaprogramming types to distinguish the logging category:
+struct DebugLog_t {};
+struct TraceLog_t {};
+struct InfoLog_t {};
+struct ErrorLog_t {};
+struct WarnLog_t {};
+struct CriticalLog_t {};
 
 class SessionManager : public std::enable_shared_from_this<SessionManager>
 {
@@ -122,6 +130,9 @@ public:
     virtual ~SessionManager();
 
     void Start();
+    
+    template<typename T, typename... Args>
+    void AsyncLog(const std::string& logMessage, Args&&... args);
 
 protected:
     void StartConnect(const uint8_t& sensorNodeNumber);
@@ -135,4 +146,68 @@ private:
     uint8_t                     m_NumberOfConnectedSockets;
     std::mutex                  m_TheDisplayMutex;
     SystemClock_t::time_point   m_LastReadoutTime;
+
+public:    
+    // Log exceptions output to the console but in a truly thread-safe 
+    // non-interleaved character way by leveraging spdlog async logger:
+    static std::shared_ptr<spdlog::logger>   m_pAsyncLogger;
 };
+
+template<typename T, typename... Args>
+void SessionManager::AsyncLog(const std::string& logMessage, Args&&... args)
+{
+    static_assert((std::is_same_v<T, DebugLog_t>
+                || std::is_same_v<T, TraceLog_t>
+                || std::is_same_v<T, InfoLog_t>
+                || std::is_same_v<T, ErrorLog_t>
+                || std::is_same_v<T, WarnLog_t>
+                || std::is_same_v<T, CriticalLog_t>),
+    "Hey! Logging category MUST be one of the following:\n\tDebugLog_t \
+                \n\tTraceLog_t \n\tInfoLog_t \n\tErrorLog_t \
+                \n\tWarnLog_t \n\tFatalLog_t");
+    
+    std::ostringstream oss;            
+    oss << logMessage;
+    
+    // Leverage fold expressions in C++17 to resolve the parameter pack
+    // expansion:
+    ((oss << ' ' << args), ...);
+        
+    std::string logString = oss.str();
+        
+    // For safety, ensure that the async logger is properly initialized  
+    // before attempting to dereference and use it.
+    if (m_pAsyncLogger)
+    {        
+        if constexpr (std::is_same_v<T, DebugLog_t>)
+        {
+            m_pAsyncLogger->debug("{}", logString);
+        }
+        else if constexpr (std::is_same_v<T, TraceLog_t>)
+        {
+            m_pAsyncLogger->trace("{}", logString);
+        }
+        else if constexpr (std::is_same_v<T, InfoLog_t>)
+        {
+            m_pAsyncLogger->info("{}", logString);
+        }
+        else if constexpr (std::is_same_v<T, ErrorLog_t>)
+        {
+            m_pAsyncLogger->error("{}", logString);
+        }
+        else if constexpr (std::is_same_v<T, WarnLog_t>)
+        {
+            m_pAsyncLogger->warn("{}", logString);
+        }
+        else if constexpr (std::is_same_v<T, CriticalLog_t>)
+        {
+            m_pAsyncLogger->critical("{}", logString);
+        }
+    }
+    else
+    {
+        std::cerr << "WARN: m_pAsyncLogger is unexpectedly a nullptr!" << "\n";
+        std::cerr << "\t" << Utility::TypeName<T>() << "\n";
+        std::cerr << "\t\"" << logString << "\"\n";
+    }
+}

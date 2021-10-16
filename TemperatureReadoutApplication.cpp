@@ -57,7 +57,8 @@ void terminator(int signalNumber)
 {
     if ((SIGTERM == signalNumber) || (SIGINT == signalNumber) || (SIGQUIT == signalNumber))
     {
-        Utility::g_ConsoleLogger->warn("\nSignal Received. Closing application orderly, cleanly and gracefully.\n\n");
+        Utility::GetSynchronousLogger()->warn(
+        "\nSignal Received. Closing application orderly, cleanly and gracefully.\n\n");
         
         // This call is designed to be thread-safe so go ahead and invoke
         // it from the asynchronous signal context.

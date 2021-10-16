@@ -50,7 +50,7 @@ namespace Common
         }
         catch (const std::exception& e)
         {
-            Utility::g_ConsoleLogger->error("Caught an exception! {0}", e.what());
+            Utility::GetSynchronousLogger()->error("Caught an exception! {0}", e.what());
         }
     }
 
@@ -136,6 +136,11 @@ using SensorPack_t = std::array<SensorNode_t, NUMBER_OF_SENSOR_NODES>;
 // Also value-initialize all sensor node abstractions.
 static SensorPack_t g_TheCustomerSensors{};
 
+// Definition of async logger static member in order to yield complete
+// static member type:
+std::shared_ptr<spdlog::logger> SessionManager::m_pAsyncLogger = 
+    spdlog::stdout_color_mt<spdlog::async_factory>("async_file_logger");
+
 SessionManager::SessionManager()
     : m_NumberOfConnectedSockets(0)
     , m_TheDisplayMutex()
@@ -198,8 +203,8 @@ void SessionManager::StartConnect(const uint8_t& sensorNodeNumber)
 {   
     tcp::resolver resolver1(Common::g_DispatcherIOContext);
     tcp::resolver::query query1(tcp::v4(), 
-                                g_TheCustomerSensors[sensorNodeNumber].m_Host.c_str(), 
-                                g_TheCustomerSensors[sensorNodeNumber].m_Port.c_str());
+                 g_TheCustomerSensors[sensorNodeNumber].m_Host.c_str(), 
+                 g_TheCustomerSensors[sensorNodeNumber].m_Port.c_str());
     tcp::resolver::iterator destination1 = resolver1.resolve(query1);
 
     if (destination1 != asio::ip::tcp::resolver::iterator()) 
@@ -208,9 +213,11 @@ void SessionManager::StartConnect(const uint8_t& sensorNodeNumber)
     }   
     else
     {
-        Utility::g_ConsoleLogger->error("Could not resolve IP address query :-> \"{0}:{1}\"",
-                 g_TheCustomerSensors[sensorNodeNumber].m_Host.c_str(),
-                 g_TheCustomerSensors[sensorNodeNumber].m_Port.c_str());
+        // Synchronous logging:
+        Utility::GetSynchronousLogger()->error(
+            "Could not resolve IP address query :-> \"{0}:{1}\"",
+            g_TheCustomerSensors[sensorNodeNumber].m_Host.c_str(),
+            g_TheCustomerSensors[sensorNodeNumber].m_Port.c_str());
     }
 }
 
@@ -223,12 +230,6 @@ void SessionManager::AsyncConnect(const uint8_t& sensorNodeNumber,
     // with the appropriate C++ lambda captures on shared_ptr to self.
     auto self(shared_from_this());
     
-    // In truly asynchronous contexts, we must always invoke this
-    // method as a safety check before logging. This will ensure that
-    // the logger shared_ptr is initialized properly if it does not
-    // exist, before attempting to dereference it.
-    Utility::InitializeLogger();
-    
     if (!g_TheCustomerSensors[sensorNodeNumber].m_ConnectionSocket.is_open())
     {
         tcp::endpoint endpoint1;
@@ -236,8 +237,23 @@ void SessionManager::AsyncConnect(const uint8_t& sensorNodeNumber,
         if (it != asio::ip::tcp::resolver::iterator()) 
         {
             endpoint1 = *it;
-            Utility::g_ConsoleLogger->debug("Connecting to TCP endpoint :-> {0}",
-                 endpoint1);
+            
+            std::string logMessage = "Connecting to TCP endpoint :-> ";
+        
+            // Asynchronous logging:
+            //
+            // Escape the potentially asynchronous context, and schedule/enter 
+            // the logging method on the worker thread context so that
+            // we can safely lock any logging mutexes without deadlocking.
+            
+            // Note that arguments to std::bind are copied or moved, and
+            // are never passed by reference unless wrapped in std::ref
+            // or std::cref:
+            asio::post(Common::g_DispatcherIOContext, 
+                std::bind(&SessionManager::AsyncLog<DebugLog_t>,
+                this, 
+                logMessage,
+                endpoint1));
                       
             g_TheCustomerSensors[sensorNodeNumber].m_ConnectionSocket.async_connect(endpoint1,
                              std::bind(&SessionManager::HandleConnect,
@@ -245,12 +261,21 @@ void SessionManager::AsyncConnect(const uint8_t& sensorNodeNumber,
         }
         else
         {
-            Utility::g_ConsoleLogger->warn("Giving up on connecting to:\n\t\"{0}:{1}\"\n\tValue := \"{2}\"",
-                 g_TheCustomerSensors[sensorNodeNumber].m_Host,
-                 g_TheCustomerSensors[sensorNodeNumber].m_Port,
-                 std::string("Exhausted resolved endpoints list!"));
-          
-            Utility::g_ConsoleLogger->warn("Ensure to a priori launch the sensor node test application(s).");
+            std::string logMessage = fmt::format(
+                "Giving up on connecting to:\n\t\"{0}:{1}\"\n\tValue := \"{2}\"",
+                g_TheCustomerSensors[sensorNodeNumber].m_Host,
+                g_TheCustomerSensors[sensorNodeNumber].m_Port,
+                std::string("Exhausted resolved endpoints list!"));
+        
+            asio::post(Common::g_DispatcherIOContext, 
+                std::bind(&SessionManager::AsyncLog<WarnLog_t>,
+                this, 
+                logMessage));
+                       
+            asio::post(Common::g_DispatcherIOContext, 
+                std::bind(&SessionManager::AsyncLog<WarnLog_t>,
+                this, 
+                std::string("Ensure to a priori launch the sensor node test application(s).")));
         }
     }   
 }
@@ -263,12 +288,6 @@ void SessionManager::HandleConnect(const std::error_code& error,
     // with the appropriate C++ lambda captures on shared_ptr to self.
     auto self(shared_from_this());
     
-    // In truly asynchronous contexts, we must always invoke this
-    // method as a safety check before logging. This will ensure that
-    // the logger shared_ptr is initialized properly if it does not
-    // exist, before attempting to dereference it.
-    Utility::InitializeLogger();
-    
     if (!error)
     {
         // The async_connect() function automatically opens the socket 
@@ -277,9 +296,15 @@ void SessionManager::HandleConnect(const std::error_code& error,
         // available endpoint for the same sensor. 
         if (!g_TheCustomerSensors[sensorNodeNumber].m_ConnectionSocket.is_open())
         {
-            Utility::g_ConsoleLogger->error("Failure in connecting to TCP socket:\n\t{0}\n\tValue := \"{1}\"",
-                 endpointIter->endpoint(),
-                 std::string("Connection somehow timed out."));
+            std::string logMessage = fmt::format(
+                "Failure in connecting to TCP socket:\n\t{0}\n\tValue := \"{1}\"",
+                endpointIter->endpoint(),
+                std::string("Connection somehow timed out."));
+        
+            asio::post(Common::g_DispatcherIOContext, 
+                std::bind(&SessionManager::AsyncLog<ErrorLog_t>,
+                this, 
+                logMessage));
 
             // Try the next available endpoint for the same sensor.
             AsyncConnect(sensorNodeNumber, ++endpointIter);
@@ -287,13 +312,22 @@ void SessionManager::HandleConnect(const std::error_code& error,
         else
         {
             // Otherwise we have successfully established a connection.
-            Utility::g_ConsoleLogger->trace("Successfully connected to \"{0}\"",
-                 endpointIter->endpoint());
+            std::string logMessage = fmt::format(
+                "Successfully connected to \"{0}\"",
+                endpointIter->endpoint());
+        
+            asio::post(Common::g_DispatcherIOContext, 
+                std::bind(&SessionManager::AsyncLog<TraceLog_t>,
+                this, 
+                logMessage));
                       
             ++m_NumberOfConnectedSockets;
             if (NUMBER_OF_SENSOR_NODES == m_NumberOfConnectedSockets)
             {
-                Utility::g_ConsoleLogger->trace("ALL temperature sensor nodes have been successfully connected to.");
+                asio::post(Common::g_DispatcherIOContext, 
+                    std::bind(&SessionManager::AsyncLog<TraceLog_t>,
+                    this, 
+                    std::string("ALL temperature sensor nodes have been successfully connected to.")));
             }
 
             // Proceed to reading temperature readings and exercising the
@@ -312,9 +346,15 @@ void SessionManager::HandleConnect(const std::error_code& error,
         oss << "\t\tCategory: " << error.category().name() << '\n';
         oss << "\t\tMessage: " << error.message() << '\n';
 
-        Utility::g_ConsoleLogger->error("Failure in connecting to TCP socket:\n\t{0}\n\tValue := \"{1}\"",
-             endpointIter->endpoint(),
-             oss.str());
+        std::string logMessage = fmt::format(
+            "Failure in connecting to TCP socket:\n\t{0}\n\tValue := \"{1}\"",
+            endpointIter->endpoint(),
+            oss.str());
+    
+        asio::post(Common::g_DispatcherIOContext, 
+            std::bind(&SessionManager::AsyncLog<ErrorLog_t>,
+            this, 
+            logMessage));
                   
         // We need to close the socket used in the previous connection
         // attempt before re-attempting to start a new one.
@@ -331,12 +371,6 @@ void SessionManager::ReceiveTemperatureData(const uint8_t& sensorNodeNumber)
     // with the appropriate C++ lambda captures on shared_ptr to self.
     auto self(shared_from_this());
     
-    // In truly asynchronous contexts, we must always invoke this
-    // method as a safety check before logging. This will ensure that
-    // the logger shared_ptr is initialized properly if it does not
-    // exist, before attempting to dereference it.
-    Utility::InitializeLogger();
-    
     // Note that though asio::ip::tcp::socket is NOT thread safe,
     // we are guaranteed safe operation as we are receiving asynchronously
     // and sequentially per sensor node socket.
@@ -346,18 +380,17 @@ void SessionManager::ReceiveTemperatureData(const uint8_t& sensorNodeNumber)
     g_TheCustomerSensors[sensorNodeNumber].m_ConnectionSocket.async_receive(
          asio::buffer(g_TheCustomerSensors[sensorNodeNumber].m_TcpData),
     [&](const std::error_code& error, std::size_t length)
-    {
-        // In truly asynchronous contexts, we must always invoke this
-        // method as a safety check before logging. This will ensure that
-        // the logger shared_ptr is initialized properly if it does not
-        // exist, before attempting to dereference it.
-        Utility::InitializeLogger();
-        
+    {   
         if (!error)
         {
             // Debug prints...
-            //Utility::g_ConsoleLogger->debug("{0}\n",
+            //std::string logMessage = fmt::format("{}\n",
             //   std::string(g_TheCustomerSensors[sensorNodeNumber].m_TcpData.data(), length));
+
+            //asio::post(Common::g_DispatcherIOContext, 
+            //    std::bind(&SessionManager::AsyncLog<DebugLog_t>,
+            //    this, 
+            //    logMessage));
             
             // This is the sensor temperature reading that we received.
             g_TheCustomerSensors[sensorNodeNumber].m_CurrentTemperatureReading
@@ -372,8 +405,8 @@ void SessionManager::ReceiveTemperatureData(const uint8_t& sensorNodeNumber)
             // we can safely lock the display mutex before attempting to
             // display. Without this precaution, we might deadlock.
             asio::post(Common::g_DispatcherIOContext, 
-                       std::bind(&SessionManager::DisplayTemperatureData,
-                       this));
+                std::bind(&SessionManager::DisplayTemperatureData,
+                this));
         }
         else
         {
@@ -383,10 +416,16 @@ void SessionManager::ReceiveTemperatureData(const uint8_t& sensorNodeNumber)
             oss << "\t\tCategory: " << error.category().name() << '\n';
             oss << "\t\tMessage: " << error.message() << '\n';
 
-            Utility::g_ConsoleLogger->error("Failure in reading from TCP socket connection:\n\t\"{0}:{1}\"\n\tValue := \"{2}\"",
-                 g_TheCustomerSensors[sensorNodeNumber].m_Host,
-                 g_TheCustomerSensors[sensorNodeNumber].m_Port,
-                 oss.str());
+            std::string logMessage = fmt::format(
+                "Failure in reading from TCP socket connection:\n\t\"{0}:{1}\"\n\tValue := \"{2}\"",
+                g_TheCustomerSensors[sensorNodeNumber].m_Host,
+                g_TheCustomerSensors[sensorNodeNumber].m_Port,
+                oss.str());
+        
+            asio::post(Common::g_DispatcherIOContext, 
+                std::bind(&SessionManager::AsyncLog<ErrorLog_t>,
+                this, 
+                logMessage));
         }
         
         // Customer Requirement:
@@ -459,9 +498,9 @@ void SessionManager::DisplayTemperatureData()
         // computed from the latest readings from each node."
         averageTemperature = averageTemperature / count ;
         
-        // You would then use it by creating a local instance of IosFlagSaver
-        // whenever you wanted to save the current flag state. When this instance
-        // goes out of scope, the flag state will be restored.
+        // Create a local instance of IosFlagSaver so as to save the 
+        // current flag state of std::cout. This instance going out of 
+        // scope would trigger the previous flag state being restored.
         IosFlagSaver iosfs(std::cout);
         
         std::cout << "\t\t" << std::fixed << std::setprecision(1)

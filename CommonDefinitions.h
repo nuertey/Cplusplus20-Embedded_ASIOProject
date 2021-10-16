@@ -149,27 +149,73 @@ private:
 
 namespace Utility 
 {  
-    // Log exceptions/test output to the console but in a truly 
-    // thread-safe non-interleaved character way:
+    template <typename T, typename U>
+    struct TrueTypesEquivalent : std::is_same<typename std::decay<T>::type, U>::type
+    {};
+    
+    template <typename T>
+    constexpr auto TypeName()
+    {
+        std::string_view name;
+        std::string_view prefix;
+        std::string_view suffix;
+        
+    #ifdef __clang__
+        name = __PRETTY_FUNCTION__;
+        prefix = "auto type_name() [T = ";
+        suffix = "]";
+    #elif defined(__GNUC__)
+        name = __PRETTY_FUNCTION__;
+        prefix = "constexpr auto Utility::TypeName() [with ";
+        suffix = "]";
+    #elif defined(_MSC_VER)
+        name = __FUNCSIG__;
+        prefix = "auto __cdecl type_name<";
+        suffix = ">(void)";
+    #endif
+
+        name.remove_prefix(prefix.size());
+        name.remove_suffix(suffix.size());
+
+        return name;
+    }
+    
+    // Log 'normal' synchronous program flow output to the console but 
+    // in a truly thread-safe non-interleaved character way by leveraging
+    // spdlog multi-threaded console logger:
     static std::shared_ptr<spdlog::logger>       g_ConsoleLogger;
 
     inline void InitializeLogger()
     {
         if (!g_ConsoleLogger)
         {
+            // Default thread pool settings can be modified *before* 
+            // creating the logger(s):
+            //
+            // Queue with 8k items and 10 backing threads (default is 1).
+            spdlog::init_thread_pool(8192, 10); 
+
             // Multi-threaded console logger (with color support)
-            //g_ConsoleLogger = spdlog::stdout_color_mt("console");
-            
-            //                spdlog::stdout_color_mt<spdlog::async_factory>
-            //            (const std::string &logger_name);
-            g_ConsoleLogger = spdlog::stdout_color_mt<spdlog::async_factory>
-                          ("async_file_logger");
+            g_ConsoleLogger = spdlog::stdout_color_mt("console");
 
             spdlog::set_level(spdlog::level::trace); // Set global log level
 
             // Customize msg format for all messages
             spdlog::set_pattern("%H:%M:%S %z - %^%l%$ - %^[thread %t = %q]%$ -> %v");
         }
+    }
+    
+    // Essentially, we have turned the synchronous logger into a 
+    // singleton; as befits its supposed-to-be usage pattern.
+    inline static std::shared_ptr<spdlog::logger>& GetSynchronousLogger()
+    {
+        // This is a safety check to prevent unforeseen segmentation faults.
+        if (!g_ConsoleLogger)
+        {
+            InitializeLogger();
+        }
+        
+        return g_ConsoleLogger;
     }
 
     // Global Random Number Generator (RNG).
