@@ -238,7 +238,8 @@ void SessionManager::AsyncConnect(const uint8_t& sensorNodeNumber,
         {
             endpoint1 = *it;
             
-            std::string logMessage = "Connecting to TCP endpoint :-> ";
+            std::string logMessage = fmt::format(
+                "Connecting to TCP endpoint :-> {}", endpoint1);
         
             // Asynchronous logging:
             //
@@ -252,8 +253,7 @@ void SessionManager::AsyncConnect(const uint8_t& sensorNodeNumber,
             asio::post(Common::g_DispatcherIOContext, 
                 std::bind(&SessionManager::AsyncLog<DebugLog_t>,
                 this, 
-                logMessage,
-                endpoint1));
+                logMessage));
                       
             g_TheCustomerSensors[sensorNodeNumber].m_ConnectionSocket.async_connect(endpoint1,
                              std::bind(&SessionManager::HandleConnect,
