@@ -70,7 +70,7 @@
 #include "spdlog/spdlog.h"
 #include "spdlog/fmt/fmt.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
-#include "spdlog/async.h" //support for async logging.
+//#include "spdlog/async.h" //support for async logging.
 
 using SystemClock_t = std::chrono::system_clock;
 using Seconds_t     = std::chrono::seconds;
@@ -193,7 +193,7 @@ namespace Utility
             // creating the logger(s):
             //
             // Queue with 8k items and 10 backing threads (default is 1).
-            spdlog::init_thread_pool(8192, 10); 
+            //spdlog::init_thread_pool(8192, 10); 
 
             // Multi-threaded console logger (with color support)
             g_ConsoleLogger = spdlog::stdout_color_mt("console");

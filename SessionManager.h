@@ -150,7 +150,7 @@ private:
 public:    
     // Log exceptions output to the console but in a truly thread-safe 
     // non-interleaved character way by leveraging spdlog async logger:
-    static std::shared_ptr<spdlog::logger>   m_pAsyncLogger;
+    //static std::shared_ptr<spdlog::logger>   m_pAsyncLogger;
 };
 
 template<typename T, typename... Args>
@@ -174,39 +174,34 @@ void SessionManager::AsyncLog(const std::string& logMessage, Args&&... args)
     ((oss << ' ' << args), ...);
         
     std::string logString = oss.str();
-        
-    // For safety, ensure that the async logger is properly initialized  
-    // before attempting to dereference and use it.
-    if (m_pAsyncLogger)
-    {        
-        if constexpr (std::is_same_v<T, DebugLog_t>)
-        {
-            m_pAsyncLogger->debug("{}", logString);
-        }
-        else if constexpr (std::is_same_v<T, TraceLog_t>)
-        {
-            m_pAsyncLogger->trace("{}", logString);
-        }
-        else if constexpr (std::is_same_v<T, InfoLog_t>)
-        {
-            m_pAsyncLogger->info("{}", logString);
-        }
-        else if constexpr (std::is_same_v<T, ErrorLog_t>)
-        {
-            m_pAsyncLogger->error("{}", logString);
-        }
-        else if constexpr (std::is_same_v<T, WarnLog_t>)
-        {
-            m_pAsyncLogger->warn("{}", logString);
-        }
-        else if constexpr (std::is_same_v<T, CriticalLog_t>)
-        {
-            m_pAsyncLogger->critical("{}", logString);
-        }
+                
+    if constexpr (std::is_same_v<T, DebugLog_t>)
+    {
+        Utility::GetSynchronousLogger()->debug("{}", logString);
+    }
+    else if constexpr (std::is_same_v<T, TraceLog_t>)
+    {
+        Utility::GetSynchronousLogger()->trace("{}", logString);
+    }
+    else if constexpr (std::is_same_v<T, InfoLog_t>)
+    {
+        Utility::GetSynchronousLogger()->info("{}", logString);
+    }
+    else if constexpr (std::is_same_v<T, ErrorLog_t>)
+    {
+        Utility::GetSynchronousLogger()->error("{}", logString);
+    }
+    else if constexpr (std::is_same_v<T, WarnLog_t>)
+    {
+        Utility::GetSynchronousLogger()->warn("{}", logString);
+    }
+    else if constexpr (std::is_same_v<T, CriticalLog_t>)
+    {
+        Utility::GetSynchronousLogger()->critical("{}", logString);
     }
     else
     {
-        std::cerr << "WARN: m_pAsyncLogger is unexpectedly a nullptr!" << "\n";
+        std::cerr << "WARN: Type T is UNEXPECTED!" << "\n";
         std::cerr << "\t" << Utility::TypeName<T>() << "\n";
         std::cerr << "\t\"" << logString << "\"\n";
     }

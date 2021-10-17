@@ -138,8 +138,8 @@ static SensorPack_t g_TheCustomerSensors{};
 
 // Definition of async logger static member in order to yield complete
 // static member type:
-std::shared_ptr<spdlog::logger> SessionManager::m_pAsyncLogger = 
-    spdlog::stdout_color_mt<spdlog::async_factory>("async_file_logger");
+//std::shared_ptr<spdlog::logger> SessionManager::m_pAsyncLogger = 
+//    spdlog::stdout_color_mt<spdlog::async_factory>("async_file_logger");
 
 SessionManager::SessionManager()
     : m_NumberOfConnectedSockets(0)
