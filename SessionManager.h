@@ -177,27 +177,33 @@ void SessionManager::AsyncLog(const std::string& logMessage, Args&&... args)
                 
     if constexpr (std::is_same_v<T, DebugLog_t>)
     {
-        Utility::GetSynchronousLogger()->debug("{}", logString);
+        //Utility::GetSynchronousLogger()->debug("{}", logString);
+        std::cout << logString << "\n";
     }
     else if constexpr (std::is_same_v<T, TraceLog_t>)
     {
-        Utility::GetSynchronousLogger()->trace("{}", logString);
+        //Utility::GetSynchronousLogger()->trace("{}", logString);
+        std::cout << logString << "\n";
     }
     else if constexpr (std::is_same_v<T, InfoLog_t>)
     {
-        Utility::GetSynchronousLogger()->info("{}", logString);
+        //Utility::GetSynchronousLogger()->info("{}", logString);
+        std::cout << logString << "\n";
     }
     else if constexpr (std::is_same_v<T, ErrorLog_t>)
     {
-        Utility::GetSynchronousLogger()->error("{}", logString);
+        //Utility::GetSynchronousLogger()->error("{}", logString);
+        std::cerr << logString << "\n";
     }
     else if constexpr (std::is_same_v<T, WarnLog_t>)
     {
-        Utility::GetSynchronousLogger()->warn("{}", logString);
+        //Utility::GetSynchronousLogger()->warn("{}", logString);
+        std::cerr << logString << "\n";
     }
     else if constexpr (std::is_same_v<T, CriticalLog_t>)
     {
-        Utility::GetSynchronousLogger()->critical("{}", logString);
+        //Utility::GetSynchronousLogger()->critical("{}", logString);
+        std::cerr << logString << "\n";
     }
     else
     {
