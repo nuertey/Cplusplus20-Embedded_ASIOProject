@@ -66,23 +66,21 @@ namespace Common
     // with 'const' to ensure that multiple symbol definition error is 
     // not encountered during linking. 
     const auto DispatcherWorkerThread = []()
-    {
-        // Safety check:
-        Utility::InitializeLogger();
-        
+    {   
         // To aid debugging by means of strace, ps, valgrind, gdb, and
         // variants, name our created threads. 
-        std::string namePrefix("WorkerThread_");
-        std::string nameSuffix(3, '*');
-        Utility::RandLibStringGenerator generator;
-        std::generate(nameSuffix.begin(), nameSuffix.end(), generator);
-        std::string uniqueName = namePrefix + nameSuffix;
+        //std::string namePrefix("WorkerThread_");
+        //std::string nameSuffix(3, '*');
+        //Utility::RandLibStringGenerator generator;
+        //std::generate(nameSuffix.begin(), nameSuffix.end(), generator);
+        //std::string uniqueName = namePrefix + nameSuffix;
+        //
+        //char myThreadName[Utility::RECOMMENDED_BUFFER_SIZE];
+        //Utility::SetThreadName(uniqueName.c_str());
+        //Utility::GetThreadName(myThreadName, sizeof(myThreadName));
 
-        char myThreadName[Utility::RECOMMENDED_BUFFER_SIZE];
-        Utility::SetThreadName(uniqueName.c_str());
-        Utility::GetThreadName(myThreadName, sizeof(myThreadName));
-
-        Utility::GetSynchronousLogger()->info("Parent just created a thread. ThreadName = {0}", myThreadName);
+        //Utility::GetSynchronousLogger()->info("Parent just created a thread. ThreadName = {0}", myThreadName);
+        Utility::GetSynchronousLogger()->info("Parent just created a thread.");
 
         // TBD Nuertey Odzeyem; were I truly compiling on an Embedded
         // system, I would have optimized these C++ exceptions completely
@@ -109,7 +107,8 @@ namespace Common
             Utility::GetSynchronousLogger()->error("Caught an exception! {0}", e.what());
         }
 
-        Utility::GetSynchronousLogger()->warn("Exiting Dispatcher Worker Thread {0}", myThreadName);
+        //Utility::GetSynchronousLogger()->warn("Exiting Dispatcher Worker Thread {0}", myThreadName);
+        Utility::GetSynchronousLogger()->warn("Exiting Dispatcher Worker Thread.");
     };
 }
 
@@ -169,41 +168,42 @@ void SessionManager::AsyncLog(const std::string& logMessage, Args&&... args)
     std::ostringstream oss;            
     oss << logMessage;
     
-    // Leverage fold expressions in C++17 to resolve the parameter pack
-    // expansion:
+    // Leverage 'Fold Expressions in C++17' to resolve the parameter pack
+    // expansion. Fold Expressions reduce (i.e. fold) parameter packs
+    // over binary operators.
     ((oss << ' ' << args), ...);
         
     std::string logString = oss.str();
                 
     if constexpr (std::is_same_v<T, DebugLog_t>)
     {
-        //Utility::GetSynchronousLogger()->debug("{}", logString);
-        std::cout << logString << "\n";
+        Utility::GetSynchronousLogger()->debug("{}", logString);
+        //std::cout << logString << "\n";
     }
     else if constexpr (std::is_same_v<T, TraceLog_t>)
     {
-        //Utility::GetSynchronousLogger()->trace("{}", logString);
-        std::cout << logString << "\n";
+        Utility::GetSynchronousLogger()->trace("{}", logString);
+        //std::cout << logString << "\n";
     }
     else if constexpr (std::is_same_v<T, InfoLog_t>)
     {
-        //Utility::GetSynchronousLogger()->info("{}", logString);
-        std::cout << logString << "\n";
+        Utility::GetSynchronousLogger()->info("{}", logString);
+        //std::cout << logString << "\n";
     }
     else if constexpr (std::is_same_v<T, ErrorLog_t>)
     {
-        //Utility::GetSynchronousLogger()->error("{}", logString);
-        std::cerr << logString << "\n";
+        Utility::GetSynchronousLogger()->error("{}", logString);
+        //std::cerr << logString << "\n";
     }
     else if constexpr (std::is_same_v<T, WarnLog_t>)
     {
-        //Utility::GetSynchronousLogger()->warn("{}", logString);
-        std::cerr << logString << "\n";
+        Utility::GetSynchronousLogger()->warn("{}", logString);
+        //std::cerr << logString << "\n";
     }
     else if constexpr (std::is_same_v<T, CriticalLog_t>)
     {
-        //Utility::GetSynchronousLogger()->critical("{}", logString);
-        std::cerr << logString << "\n";
+        Utility::GetSynchronousLogger()->critical("{}", logString);
+        //std::cerr << logString << "\n";
     }
     else
     {

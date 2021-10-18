@@ -250,10 +250,11 @@ void SessionManager::AsyncConnect(const uint8_t& sensorNodeNumber,
             // Note that arguments to std::bind are copied or moved, and
             // are never passed by reference unless wrapped in std::ref
             // or std::cref:
-            asio::post(Common::g_DispatcherIOContext, 
-                std::bind(&SessionManager::AsyncLog<DebugLog_t>,
-                this, 
-                logMessage));
+            //asio::post(Common::g_DispatcherIOContext, 
+            //    std::bind(&SessionManager::AsyncLog<DebugLog_t>,
+            //    this, 
+            //    logMessage));
+            std::cout << logMessage << "\n";
                       
             g_TheCustomerSensors[sensorNodeNumber].m_ConnectionSocket.async_connect(endpoint1,
                              std::bind(&SessionManager::HandleConnect,
@@ -267,15 +268,17 @@ void SessionManager::AsyncConnect(const uint8_t& sensorNodeNumber,
                 g_TheCustomerSensors[sensorNodeNumber].m_Port,
                 std::string("Exhausted resolved endpoints list!"));
         
-            asio::post(Common::g_DispatcherIOContext, 
-                std::bind(&SessionManager::AsyncLog<WarnLog_t>,
-                this, 
-                logMessage));
+            //asio::post(Common::g_DispatcherIOContext, 
+            //    std::bind(&SessionManager::AsyncLog<WarnLog_t>,
+            //    this, 
+            //    logMessage));
+            std::cerr << logMessage << "\n";
                        
-            asio::post(Common::g_DispatcherIOContext, 
-                std::bind(&SessionManager::AsyncLog<WarnLog_t>,
-                this, 
-                std::string("Ensure to a priori launch the sensor node test application(s).")));
+            //asio::post(Common::g_DispatcherIOContext, 
+            //    std::bind(&SessionManager::AsyncLog<WarnLog_t>,
+            //    this, 
+            //    std::string("Ensure to a priori launch the sensor node test application(s).")));
+            std::cerr << std::string("Ensure to a priori launch the sensor node test application(s).") << "\n";
         }
     }   
 }
@@ -301,10 +304,11 @@ void SessionManager::HandleConnect(const std::error_code& error,
                 endpointIter->endpoint(),
                 std::string("Connection somehow timed out."));
         
-            asio::post(Common::g_DispatcherIOContext, 
-                std::bind(&SessionManager::AsyncLog<ErrorLog_t>,
-                this, 
-                logMessage));
+            //asio::post(Common::g_DispatcherIOContext, 
+            //    std::bind(&SessionManager::AsyncLog<ErrorLog_t>,
+            //    this, 
+            //    logMessage));
+            std::cerr << logMessage << "\n";
 
             // Try the next available endpoint for the same sensor.
             AsyncConnect(sensorNodeNumber, ++endpointIter);
@@ -316,18 +320,20 @@ void SessionManager::HandleConnect(const std::error_code& error,
                 "Successfully connected to \"{0}\"",
                 endpointIter->endpoint());
         
-            asio::post(Common::g_DispatcherIOContext, 
-                std::bind(&SessionManager::AsyncLog<TraceLog_t>,
-                this, 
-                logMessage));
+            //asio::post(Common::g_DispatcherIOContext, 
+            //    std::bind(&SessionManager::AsyncLog<TraceLog_t>,
+            //    this, 
+            //    logMessage));
+            std::cout << logMessage << "\n";
                       
             ++m_NumberOfConnectedSockets;
             if (NUMBER_OF_SENSOR_NODES == m_NumberOfConnectedSockets)
             {
-                asio::post(Common::g_DispatcherIOContext, 
-                    std::bind(&SessionManager::AsyncLog<TraceLog_t>,
-                    this, 
-                    std::string("ALL temperature sensor nodes have been successfully connected to.")));
+                //asio::post(Common::g_DispatcherIOContext, 
+                //    std::bind(&SessionManager::AsyncLog<TraceLog_t>,
+                //    this, 
+                //    std::string("ALL temperature sensor nodes have been successfully connected to.")));
+                std::cout << std::string("ALL temperature sensor nodes have been successfully connected to.") << "\n";
             }
 
             // Proceed to reading temperature readings and exercising the
@@ -351,10 +357,11 @@ void SessionManager::HandleConnect(const std::error_code& error,
             endpointIter->endpoint(),
             oss.str());
     
-        asio::post(Common::g_DispatcherIOContext, 
-            std::bind(&SessionManager::AsyncLog<ErrorLog_t>,
-            this, 
-            logMessage));
+        //asio::post(Common::g_DispatcherIOContext, 
+        //    std::bind(&SessionManager::AsyncLog<ErrorLog_t>,
+        //    this, 
+        //    logMessage));
+        std::cerr << logMessage << "\n";
                   
         // We need to close the socket used in the previous connection
         // attempt before re-attempting to start a new one.
@@ -422,10 +429,11 @@ void SessionManager::ReceiveTemperatureData(const uint8_t& sensorNodeNumber)
                 g_TheCustomerSensors[sensorNodeNumber].m_Port,
                 oss.str());
         
-            asio::post(Common::g_DispatcherIOContext, 
-                std::bind(&SessionManager::AsyncLog<ErrorLog_t>,
-                this, 
-                logMessage));
+            //asio::post(Common::g_DispatcherIOContext, 
+            //    std::bind(&SessionManager::AsyncLog<ErrorLog_t>,
+            //    this, 
+            //    logMessage));
+            std::cerr << logMessage << "\n";
         }
         
         // Customer Requirement:

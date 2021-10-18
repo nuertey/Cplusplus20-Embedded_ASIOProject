@@ -201,7 +201,7 @@ namespace Utility
             spdlog::set_level(spdlog::level::trace); // Set global log level
 
             // Customize msg format for all messages
-            spdlog::set_pattern("%H:%M:%S %z - %^%l%$ - %^[thread %t = %q]%$ -> %v");
+            spdlog::set_pattern("%H:%M:%S %z - %^%l%$ - %^[thread %t]%$ -> %v");
         }
     }
     
