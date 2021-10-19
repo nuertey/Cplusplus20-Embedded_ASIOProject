@@ -69,18 +69,18 @@ namespace Common
     {   
         // To aid debugging by means of strace, ps, valgrind, gdb, and
         // variants, name our created threads. 
-        //std::string namePrefix("WorkerThread_");
-        //std::string nameSuffix(3, '*');
-        //Utility::RandLibStringGenerator generator;
-        //std::generate(nameSuffix.begin(), nameSuffix.end(), generator);
-        //std::string uniqueName = namePrefix + nameSuffix;
-        //
-        //char myThreadName[Utility::RECOMMENDED_BUFFER_SIZE];
-        //Utility::SetThreadName(uniqueName.c_str());
-        //Utility::GetThreadName(myThreadName, sizeof(myThreadName));
+        std::string namePrefix("WorkerThread_");
+        std::string nameSuffix(3, '*');
+        Utility::RandLibStringGenerator generator;
+        std::generate(nameSuffix.begin(), nameSuffix.end(), generator);
+        std::string uniqueName = namePrefix + nameSuffix;
+        
+        char myThreadName[Utility::RECOMMENDED_BUFFER_SIZE];
+        Utility::SetThreadName(uniqueName.c_str());
+        Utility::GetThreadName(myThreadName, sizeof(myThreadName));
 
-        //Utility::GetSynchronousLogger()->info("Parent just created a thread. ThreadName = {0}", myThreadName);
-        Utility::GetSynchronousLogger()->info("Parent just created a thread.");
+        spdlog::info("Parent just created a thread. ThreadName = {0}", myThreadName);
+        //spdlog::info("Parent just created a thread.");
 
         // TBD Nuertey Odzeyem; were I truly compiling on an Embedded
         // system, I would have optimized these C++ exceptions completely
@@ -104,11 +104,11 @@ namespace Common
         }
         catch (const std::exception& e)
         {
-            Utility::GetSynchronousLogger()->error("Caught an exception! {0}", e.what());
+            spdlog::error("Caught an exception! {0}", e.what());
         }
 
-        //Utility::GetSynchronousLogger()->warn("Exiting Dispatcher Worker Thread {0}", myThreadName);
-        Utility::GetSynchronousLogger()->warn("Exiting Dispatcher Worker Thread.");
+        spdlog::warn("Exiting Dispatcher Worker Thread {0}", myThreadName);
+        //spdlog::warn("Exiting Dispatcher Worker Thread.");
     };
 }
 
@@ -177,32 +177,32 @@ void SessionManager::AsyncLog(const std::string& logMessage, Args&&... args)
                 
     if constexpr (std::is_same_v<T, DebugLog_t>)
     {
-        Utility::GetSynchronousLogger()->debug("{}", logString);
+        spdlog::debug("{}", logString);
         //std::cout << logString << "\n";
     }
     else if constexpr (std::is_same_v<T, TraceLog_t>)
     {
-        Utility::GetSynchronousLogger()->trace("{}", logString);
+        spdlog::trace("{}", logString);
         //std::cout << logString << "\n";
     }
     else if constexpr (std::is_same_v<T, InfoLog_t>)
     {
-        Utility::GetSynchronousLogger()->info("{}", logString);
+        spdlog::info("{}", logString);
         //std::cout << logString << "\n";
     }
     else if constexpr (std::is_same_v<T, ErrorLog_t>)
     {
-        Utility::GetSynchronousLogger()->error("{}", logString);
+        spdlog::error("{}", logString);
         //std::cerr << logString << "\n";
     }
     else if constexpr (std::is_same_v<T, WarnLog_t>)
     {
-        Utility::GetSynchronousLogger()->warn("{}", logString);
+        spdlog::warn("{}", logString);
         //std::cerr << logString << "\n";
     }
     else if constexpr (std::is_same_v<T, CriticalLog_t>)
     {
-        Utility::GetSynchronousLogger()->critical("{}", logString);
+        spdlog::critical("{}", logString);
         //std::cerr << logString << "\n";
     }
     else

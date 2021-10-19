@@ -44,6 +44,16 @@
 ***********************************************************************/
 #pragma once
 
+// spdlog headers:
+#include "spdlog/fmt/bundled/ostream.h"
+#include "spdlog/spdlog.h"
+#include "spdlog/fmt/fmt.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
+//#include "spdlog/async.h" //support for async logging.
+
+// fmt library headers:
+#include "fmt/format.h"
+
 // ASIO C++ Networking Library:
 #include <asio.hpp>
 
@@ -64,13 +74,6 @@
 // Non-Standard Headers:
 #include "Threading.h"
 #include "randutils.hpp"
-
-// spdlog headers:
-#include "spdlog/fmt/bundled/ostream.h"
-#include "spdlog/spdlog.h"
-#include "spdlog/fmt/fmt.h"
-#include "spdlog/sinks/stdout_color_sinks.h"
-//#include "spdlog/async.h" //support for async logging.
 
 using SystemClock_t = std::chrono::system_clock;
 using Seconds_t     = std::chrono::seconds;
@@ -129,6 +132,7 @@ static constexpr std::size_t DISPATCHER_THREAD_POOL_SIZE = 1;
 // when the function returns.
 struct IosFlagSaver
 {
+    // Leverage RAII design pattern:
     explicit IosFlagSaver(std::ostream& ostr)
         : m_stream(ostr)
         , m_flags(ostr.flags())
@@ -197,6 +201,8 @@ namespace Utility
 
             // Multi-threaded console logger (with color support)
             g_ConsoleLogger = spdlog::stdout_color_mt("console");
+            
+            spdlog::set_default_logger(g_ConsoleLogger);
 
             spdlog::set_level(spdlog::level::trace); // Set global log level
 

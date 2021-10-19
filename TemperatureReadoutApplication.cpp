@@ -48,7 +48,8 @@ int main([[maybe_unused]]int argc, [[maybe_unused]]char* argv[])
     Common::JoinWorkerThreads();
     
     // Release and close all loggers
-    spdlog::drop_all();
+    //spdlog::drop_all();
+    spdlog::shutdown();
     
     return 0;
 }
@@ -57,7 +58,7 @@ void terminator(int signalNumber)
 {
     if ((SIGTERM == signalNumber) || (SIGINT == signalNumber) || (SIGQUIT == signalNumber))
     {
-        Utility::GetSynchronousLogger()->warn(
+        spdlog::warn(
         "\nSignal Received. Closing application orderly, cleanly and gracefully.\n\n");
         
         // This call is designed to be thread-safe so go ahead and invoke
