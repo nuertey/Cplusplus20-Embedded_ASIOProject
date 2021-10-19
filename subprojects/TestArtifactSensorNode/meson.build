@@ -143,12 +143,13 @@ thread_dep = dependency('threads', required : true)
 # Hence it becomes imperative to produce a buildable package by skirting
 # around in the following manner:
 #
-# sudo apt-get install libspdlog-dev
+# sudo apt-get remove libspdlog-dev
+# Use manual install of header files...
 
 # Seemingly better way than above apt install:
 #
 # mkdir subprojects && meson wrap install spdlog
-spdlog_dep = dependency('spdlog', required : false)
+spdlog_dep = dependency('spdlog', required : true)
 
 if not spdlog_dep.found()
     spdlog_proj = subproject('spdlog')
@@ -162,7 +163,7 @@ endif
 # '-lfmt' is better replaced with the following because more portable:
 #
 # meson wrap install fmt
-fmt_dep = dependency('fmt', required : false)
+fmt_dep = dependency('fmt', required : true)
 
 if not fmt_dep.found()
     fmt_proj = subproject('fmt')
@@ -194,7 +195,7 @@ sensor_node_project = executable(
     include_directories : incdir, # Do NOT explicitly specify an array object here.
     dependencies : [ 
                       thread_dep, 
-                      spdlog_dep,
+                      #spdlog_dep # spdlog should not have to be depended on as it is header-only.
                       fmt_dep
                    ],
     # As math.h is not a part of the standard C library, ensure to link to it.

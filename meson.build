@@ -149,7 +149,8 @@ thread_dep = dependency('threads', required : true)
 # Hence it becomes imperative to produce a buildable package by skirting
 # around in the following manner:
 #
-# sudo apt-get install libspdlog-dev
+# sudo apt-get remove libspdlog-dev
+# Use manual install of header files...
 
 # |Using subprojects/TestArtifactSensorNode/subprojects/spdlog.wrap
 spdlog_dep = dependency('spdlog', required : true)
@@ -168,6 +169,11 @@ endif
 # |Using subprojects/TestArtifactSensorNode/subprojects/fmt.wrap
 fmt_dep = dependency('fmt', required : true)
 
+if not fmt_dep.found()
+    fmt_proj = subproject('fmt')
+    fmt_dep = fmt_proj.get_variable('fmt_dep')
+endif
+
 temperature_readout_project_sources = files([
     'SessionManager.cpp',
     'TemperatureReadoutApplication.cpp'
@@ -180,7 +186,7 @@ temperature_readout_project = executable(
     include_directories : incdir, # Do NOT explicitly specify an array object here.
     dependencies : [  thread_dep, 
                       fmt_dep,
-                      spdlog_dep
+                      #spdlog_dep # spdlog should not have to be depended on as it is header-only.
                    ],
     # As math.h is not a part of the standard C library, ensure to link to it.
     link_args : ['-Wl,-Map=TemperatureReadoutApplication.map', '-lm'],
