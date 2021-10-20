@@ -372,7 +372,8 @@ void SessionManager::HandleConnect(const std::error_code& error,
         //std::cerr << logMessage << "\n";
                   
         // We need to close the socket used in the previous connection
-        // attempt before re-attempting to start a new one.
+        // attempt before re-attempting to start a new one. Do NOT do this
+        // so application can continue monitoring the other connections.
         //g_TheCustomerSensors[sensorNodeNumber].m_ConnectionSocket.close();
 
         // Try the next available endpoint for the same sensor.

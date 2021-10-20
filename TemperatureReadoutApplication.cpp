@@ -1,4 +1,3 @@
-#include <signal.h>
 #include "SessionManager.h"
 
 void terminator(int signalNumber);
@@ -17,13 +16,7 @@ int main([[maybe_unused]]int argc, [[maybe_unused]]char* argv[])
     Common::SetupIOContext();
     Common::RunWorkerThreads();
 
-    // Setup so we catch application 'terminator' signals.
-    struct sigaction action;
-    memset(&action, 0, sizeof(struct sigaction));
-    action.sa_handler = terminator;
-    sigaction(SIGTERM, &action, NULL);
-    sigaction(SIGINT, &action, NULL);
-    sigaction(SIGQUIT, &action, NULL);
+    Utility::SetupTerminatorSignals(terminator, SIGTERM, SIGINT, SIGQUIT);
 
     // Be aware that if the program is forcibly halted whilst the SessionManager
     // is still constructing and connecting to the sockets, then by design,

@@ -44,6 +44,10 @@
 ***********************************************************************/
 #pragma once
 
+// For POSIX signal handling (i.e. signal requests to terminate 
+// application execution):  
+#include <signal.h>
+
 // spdlog headers:
 #include "spdlog/fmt/bundled/ostream.h"
 #include "spdlog/spdlog.h"
@@ -62,6 +66,7 @@
 #include <chrono>
 #include <string>
 #include <memory>
+#include <cassert>
 #include <utility>
 #include <iomanip>
 #include <ostream>
@@ -258,5 +263,64 @@ namespace Utility
         }
 
     private:
+    };
+    
+    using SignalHandlerPtr_t = std::add_pointer_t<void(int)>;
+
+    const auto SetupTerminatorSignals = [](SignalHandlerPtr_t signalHandler,
+                                           auto ...signalArgs)
+    {
+        // As is obvious from the above, signalArgs is a variadic template 
+        // that specifies the set of 'program-terminating' signals. Per 
+        // the sigaction() system call specifications, these signals can
+        // comprise any valid set of POSIX signals with the exception of
+        // SIGKILL and SIGSTOP. Ensure then to explicitly and forcibly
+        // enforce that requirement:
+               
+        // Leverage 'Fold Expressions in C++17' to resolve the parameter
+        // pack expansion.
+        (
+            assert(("Signal argument CANNOT be SIGKILL or SIGSTOP", 
+                   ((signalArgs == SIGKILL) || (signalArgs == SIGSTOP))))
+                ,
+                ...
+        );
+        
+        // Leverage an RAII-like Design Pattern to setup the sigaction()
+        // system call so we catch application 'terminator' signals:
+        //
+        // int sigaction(int signum, const struct sigaction *restrict act,
+        //                                 struct sigaction *restrict oldact);
+        
+        // 
+        struct sigaction action;
+        memset(&action, 0, sizeof(struct sigaction));
+    
+        // Note that a string_view is a string-like object that acts as an 
+        // immutable, non-owning reference to any sequence of char objects. We
+        // need string_view here because C++17 does NOT support std::string in
+        // constexpr. C++20 though, does.
+        const char* ASSERT_MESSAGE =
+            "Hey! Signal handler function/callback/lambda/class method \
+             MUST satisfy the following type:\n\t\
+             void (*)(int)";
+              
+        // Type-check the template type of the signal handler argument
+        // at compile-time:
+        static_assert((std::is_same_v<SignalHandlerPtr_t, 
+                                      decltype(action.sa_handler)>),
+                                      ASSERT_MESSAGE);
+
+        // As the above static_assert is now confirmed to be correct,  
+        // we can now safely assign the signal handler:
+        action.sa_handler = signalHandler;
+        
+        // Leverage 'Fold Expressions in C++17' to resolve the parameter
+        // pack expansion.
+        (
+            sigaction(signalArgs, &action, NULL)
+            ,
+            ...
+        );
     };
 }

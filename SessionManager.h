@@ -71,7 +71,7 @@ namespace Common
         // variants, name our created threads. 
         //std::string namePrefix("WorkerThread_");
         //std::string nameSuffix(3, '*');
-        //Utility::RandLibStringGenerator generator;
+        //Utility::RandLibStringGenerator generator{};
         //std::generate(nameSuffix.begin(), nameSuffix.end(), generator);
         //std::string uniqueName = namePrefix + nameSuffix;
         //
