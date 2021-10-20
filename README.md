@@ -703,7 +703,7 @@ Parent just created a thread.
 
 ```
 
-Note that killing an individual temperature sensor node does not halt program execution so far at least one other sensor node is operational. 
+Note that killing an individual temperature sensor node does not halt program execution so far as at least one other sensor node is operational. 
 
 After killing ALL temperature sensor nodes (backwards from highest ephemeral port number down to lowest), and then exiting the application via Cntrl+C keystroke:
 
@@ -797,6 +797,77 @@ After killing all temperature sensor nodes:
 
         --.- °C
 [WARN]: Exiting Dispatcher Worker Thread.
+
+```
+
+## EXCEPTION SCENARIO - EXECUTION OUTPUT WITH 4 TEMPERATURE SENSOR NODES BUT 3 ARE OUT OF SERVICE/POWERED DOWN:
+
+APPLICATION:
+```
+./build/TemperatureReadoutApp
+[INFO]: Parent just created a thread.
+        --.- °C
+12:41:53 -05:00 - info - [thread 12601] -> Connecting to TCP endpoint :-> 127.0.0.1:5000
+12:41:53 -05:00 - info - [thread 12601] -> Connecting to TCP endpoint :-> 127.0.0.1:5001
+12:41:53 -05:00 - trace - [thread 12601] -> Successfully connected to "127.0.0.1:5000"
+12:41:53 -05:00 - info - [thread 12601] -> Connecting to TCP endpoint :-> 127.0.0.1:5002
+12:41:53 -05:00 - info - [thread 12601] -> Connecting to TCP endpoint :-> 127.0.0.1:5003
+12:41:53 -05:00 - error - [thread 12601] -> Failure in connecting to TCP socket:
+    127.0.0.1:5001
+    Value := "Code: 111
+        Category: asio.system
+        Message: Connection refused
+"
+12:41:53 -05:00 - error - [thread 12601] -> Failure in connecting to TCP socket:
+    127.0.0.1:5002
+    Value := "Code: 111
+        Category: asio.system
+        Message: Connection refused
+"
+12:41:53 -05:00 - error - [thread 12601] -> Failure in connecting to TCP socket:
+    127.0.0.1:5003
+    Value := "Code: 111
+        Category: asio.system
+        Message: Connection refused
+"
+        -11.4 °C
+        -45.3 °C
+        43.2 °C
+        -32.0 °C
+        42.5 °C
+        12.5 °C
+        -44.6 °C
+        -44.1 °C
+        -26.5 °C
+        2.8 °C
+        -35.2 °C
+        -31.9 °C
+        -3.8 °C
+        43.2 °C
+        33.5 °C
+        -38.2 °C
+        35.3 °C
+        18.1 °C
+        33.5 °C
+        16.8 °C
+
+```
+
+After killing all temperature sensor nodes:
+
+```
+12:57:47 -05:00 - error - [thread 12601] -> Failure in reading from TCP socket connection:
+    "127.0.0.1:5000"
+    Value := "Code: 2
+        Category: asio.misc
+        Message: End of file
+"
+^C12:58:01 -05:00 - warning - [thread 12600] -> Signal Received. Closing application orderly, cleanly and gracefully.
+
+
+        --.- °C
+[WARN]: Exiting Dispatcher Worker Thread.
+
 
 ```
 

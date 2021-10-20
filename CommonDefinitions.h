@@ -280,8 +280,8 @@ namespace Utility
         // Leverage 'Fold Expressions in C++17' to resolve the parameter
         // pack expansion.
         (
-            assert(("Signal argument CANNOT be SIGKILL or SIGSTOP", 
-                   ((signalArgs == SIGKILL) || (signalArgs == SIGSTOP))))
+            assert(((void)"Signal argument CANNOT be SIGKILL or SIGSTOP", 
+                   ((signalArgs != SIGKILL) && (signalArgs != SIGSTOP))))
                 ,
                 ...
         );

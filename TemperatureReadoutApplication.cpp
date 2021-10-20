@@ -16,7 +16,7 @@ int main([[maybe_unused]]int argc, [[maybe_unused]]char* argv[])
     Common::SetupIOContext();
     Common::RunWorkerThreads();
 
-    Utility::SetupTerminatorSignals(terminator, SIGTERM, SIGINT, SIGQUIT, SIGKILL, SIGSTOP);
+    Utility::SetupTerminatorSignals(terminator, SIGTERM, SIGINT, SIGQUIT);
 
     // Be aware that if the program is forcibly halted whilst the SessionManager
     // is still constructing and connecting to the sockets, then by design,
