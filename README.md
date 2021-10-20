@@ -663,6 +663,70 @@ After killing all temperature sensor nodes:
 [WARN] : Exiting Dispatcher Worker Thread WorkerThread_V0
 ```
 
+## INTEGRATION WITH SPDLOG + FMT LIBRARIES - EXECUTION OUTPUT WITH 4 TEMPERATURE SENSOR NODES:
+
+APPLICATION:
+```
+./build/TemperatureReadoutApp
+Parent just created a thread.
+        --.- °C
+21:43:24 -05:00 - info - [thread 16513] -> Connecting to TCP endpoint :-> 127.0.0.1:5000
+21:43:24 -05:00 - info - [thread 16513] -> Connecting to TCP endpoint :-> 127.0.0.1:5001
+21:43:24 -05:00 - trace - [thread 16513] -> Successfully connected to "127.0.0.1:5000"
+21:43:24 -05:00 - info - [thread 16513] -> Connecting to TCP endpoint :-> 127.0.0.1:5002
+21:43:24 -05:00 - trace - [thread 16513] -> Successfully connected to "127.0.0.1:5001"
+21:43:24 -05:00 - info - [thread 16513] -> Connecting to TCP endpoint :-> 127.0.0.1:5003
+21:43:24 -05:00 - trace - [thread 16513] -> Successfully connected to "127.0.0.1:5002"
+21:43:24 -05:00 - trace - [thread 16513] -> Successfully connected to "127.0.0.1:5003"
+21:43:24 -05:00 - trace - [thread 16513] -> ALL temperature sensor nodes have been successfully connected to.
+        42.7 °C
+        -40.8 °C
+        -12.3 °C
+        -25.7 °C
+        16.1 °C
+        44.4 °C
+        41.2 °C
+        4.3 °C
+        -46.1 °C
+        5.9 °C
+        -3.8 °C
+        10.4 °C
+        21.1 °C
+        33.8 °C
+        -17.5 °C
+        20.1 °C
+        23.5 °C
+        -5.9 °C
+        -31.4 °C
+        -5.4 °C
+        48.3 °C
+
+```
+
+Note that killing an individual temperature sensor node does not halt program execution so far at least one other sensor node is operational. 
+
+After killing ALL temperature sensor nodes (backwards from highest ephemeral port number down to lowest), and then exiting the application via Cntrl+C keystroke:
+
+```
+        -8.5 °C
+        28.5 °C
+        38.4 °C
+        2.5 °C
+05:59:24 -05:00 - error - [thread 16513] -> Failure in reading from TCP socket connection:
+    "127.0.0.1:5000"
+    Value := "Code: 2
+        Category: asio.misc
+        Message: End of file
+"
+^C05:59:33 -05:00 - warning - [thread 16512] -> 
+Signal Received. Closing application orderly, cleanly and gracefully.
+
+
+        --.- °C
+WARN: Exiting Dispatcher Worker Thread.
+```
+
+
 ## EXCEPTION SCENARIO - EXECUTION OUTPUT WITH 4 TEMPERATURE SENSOR NODES BUT 3 ARE OUT OF SERVICE/POWERED DOWN:
 
 APPLICATION:

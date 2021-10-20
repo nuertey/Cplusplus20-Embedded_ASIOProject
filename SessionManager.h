@@ -69,18 +69,19 @@ namespace Common
     {   
         // To aid debugging by means of strace, ps, valgrind, gdb, and
         // variants, name our created threads. 
-        std::string namePrefix("WorkerThread_");
-        std::string nameSuffix(3, '*');
-        Utility::RandLibStringGenerator generator;
-        std::generate(nameSuffix.begin(), nameSuffix.end(), generator);
-        std::string uniqueName = namePrefix + nameSuffix;
-        
-        char myThreadName[Utility::RECOMMENDED_BUFFER_SIZE];
-        Utility::SetThreadName(uniqueName.c_str());
-        Utility::GetThreadName(myThreadName, sizeof(myThreadName));
+        //std::string namePrefix("WorkerThread_");
+        //std::string nameSuffix(3, '*');
+        //Utility::RandLibStringGenerator generator;
+        //std::generate(nameSuffix.begin(), nameSuffix.end(), generator);
+        //std::string uniqueName = namePrefix + nameSuffix;
+        //
+        //char myThreadName[Utility::RECOMMENDED_BUFFER_SIZE];
+        //Utility::SetThreadName(uniqueName.c_str());
+        //Utility::GetThreadName(myThreadName, sizeof(myThreadName));
 
-        spdlog::info("Parent just created a thread. ThreadName = {0}", myThreadName);
+        //spdlog::info("Parent just created a thread. ThreadName = {0}", myThreadName);
         //spdlog::info("Parent just created a thread.");
+        std::cout << "[INFO]: Parent just created a thread." << "\n";
 
         // TBD Nuertey Odzeyem; were I truly compiling on an Embedded
         // system, I would have optimized these C++ exceptions completely
@@ -104,11 +105,13 @@ namespace Common
         }
         catch (const std::exception& e)
         {
-            spdlog::error("Caught an exception! {0}", e.what());
+            //spdlog::error("Caught an exception! {0}", e.what());
+            std::cerr << "[ERROR]: Caught an exception!" << e.what() << "\n";
         }
 
-        spdlog::warn("Exiting Dispatcher Worker Thread {0}", myThreadName);
+        //spdlog::warn("Exiting Dispatcher Worker Thread {0}", myThreadName);
         //spdlog::warn("Exiting Dispatcher Worker Thread.");
+        std::cout << "[WARN]: Exiting Dispatcher Worker Thread." << "\n";
     };
 }
 

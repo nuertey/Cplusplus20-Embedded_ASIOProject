@@ -71,15 +71,15 @@ compiler_settings = [
     # the program executable would then be non-zero. Conceivably and 
     # consequentially then, that value could then be checked and subsequently
     # flagged in some automated test script or suite:
-    #'-fsanitize=address', 
-    #'-fno-omit-frame-pointer',
+    '-fsanitize=address', 
+    '-fno-omit-frame-pointer',
     
     # And of course, the quintessential one--undefined behavior. There be
     # dragons! Since we should never rely on Undefined Behavior--as its
     # effects are equally likely to be the manifestation of a quantum shift
     # precipitating the onset of a black hole which lugubriously will 
     # swallow the earth whole and make it disappear--flag those too:
-    #'-fsanitize=undefined',
+    '-fsanitize=undefined',
     
     # Enable ASIO's Handler Tracking debugging facility. Other useful 
     # defines that can be used to control the interface, functionality, 
@@ -170,6 +170,14 @@ if not fmt_dep.found()
     fmt_dep = fmt_proj.get_variable('fmt_dep')
 endif
 
+# As an addendum, ensure that the host system also has the requisite  
+# Address Sanitizer libs installed:
+# 
+# sudo apt install libasan2
+# sudo apt install libubsan0 lib64ubsan0
+asan_dep = cxx.find_library('asan', required: true)
+ubsan_dep = cxx.find_library('ubsan', required: true)
+
 sensor_node_project_sources = files([
     'TestArtifactSensorNode.cpp'
 ])
@@ -193,13 +201,14 @@ sensor_node_project = executable(
     'TestArtifactSensorNode', 
     sensor_node_project_sources,
     include_directories : incdir, # Do NOT explicitly specify an array object here.
-    dependencies : [ 
-                      thread_dep, 
-                      #spdlog_dep # spdlog should not have to be depended on as it is header-only.
-                      fmt_dep
+    dependencies : [ asan_dep,
+                     ubsan_dep,
+                     thread_dep, 
+                     #spdlog_dep # spdlog should not have to be depended on as it is header-only.
+                     fmt_dep
                    ],
     # As math.h is not a part of the standard C library, ensure to link to it.
-    link_args : ['-Wl,-Map=TestArtifactSensorNode.map', '-lm'],
+    link_args : ['-Wl,-Map=TestArtifactSensorNode.map', '-lasan', '-fsanitize=undefined', '-lm'],
     install : true,
 )
 
