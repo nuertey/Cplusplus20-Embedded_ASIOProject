@@ -295,21 +295,14 @@ namespace Utility
         // 
         struct sigaction action;
         memset(&action, 0, sizeof(struct sigaction));
-    
-        // Note that a string_view is a string-like object that acts as an 
-        // immutable, non-owning reference to any sequence of char objects. We
-        // need string_view here because C++17 does NOT support std::string in
-        // constexpr. C++20 though, does.
-        const char* ASSERT_MESSAGE =
-            "Hey! Signal handler function/callback/lambda/class method \
-             MUST satisfy the following type:\n\t\
-             void (*)(int)";
               
         // Type-check the template type of the signal handler argument
         // at compile-time:
         static_assert((std::is_same_v<SignalHandlerPtr_t, 
                                       decltype(action.sa_handler)>),
-                                      ASSERT_MESSAGE);
+                       "Hey! Signal handler function/callback/lambda/class \
+                       method MUST satisfy the following type:\n\t\
+                       void (*)(int)");
 
         // As the above static_assert is now confirmed to be correct,  
         // we can now safely assign the signal handler:
