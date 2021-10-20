@@ -727,59 +727,77 @@ WARN: Exiting Dispatcher Worker Thread.
 ```
 
 
-## EXCEPTION SCENARIO - EXECUTION OUTPUT WITH 4 TEMPERATURE SENSOR NODES BUT 3 ARE OUT OF SERVICE/POWERED DOWN:
+## EXCEPTION SCENARIO - EXECUTION OUTPUT WITH 4 TEMPERATURE SENSOR NODES BUT 2 ARE OUT OF SERVICE/POWERED DOWN:
 
 APPLICATION:
 ```
-./build/TemperatureReadoutApplication
-
+./build/TemperatureReadoutApp
+[INFO]: Parent just created a thread.
         --.- °C
-[INFO] : Parent just created a thread.                ThreadName = WorkerThread_V0
-[DEBUG] Connecting to TCP endpoint :-> 127.0.0.1:5000
-[TRACE] Successfully connected to "127.0.0.1:5000"
-[DEBUG] Connecting to TCP endpoint :-> 127.0.0.1:5001
-[TRACE] Successfully connected to "127.0.0.1:5001"
-[DEBUG] Connecting to TCP endpoint :-> 127.0.0.1:5002
-[DEBUG] Connecting to TCP endpoint :-> 127.0.0.1:5003 
-[TRACE] Successfully connected to "127.0.0.1:5002"
-[ERROR] Failure in connecting to TCP socket:
+07:04:20 -05:00 - info - [thread 2170] -> Connecting to TCP endpoint :-> 127.0.0.1:5000
+07:04:20 -05:00 - info - [thread 2170] -> Connecting to TCP endpoint :-> 127.0.0.1:5001
+07:04:20 -05:00 - info - [thread 2170] -> Connecting to TCP endpoint :-> 127.0.0.1:5002
+07:04:20 -05:00 - trace - [thread 2170] -> Successfully connected to "127.0.0.1:5000"
+07:04:20 -05:00 - info - [thread 2170] -> Connecting to TCP endpoint :-> 127.0.0.1:5003
+07:04:20 -05:00 - trace - [thread 2170] -> Successfully connected to "127.0.0.1:5001"
+07:04:20 -05:00 - error - [thread 2170] -> Failure in connecting to TCP socket:
+    127.0.0.1:5002
+    Value := "Code: 111
+        Category: asio.system
+        Message: Connection refused
+"
+07:04:20 -05:00 - error - [thread 2170] -> Failure in connecting to TCP socket:
     127.0.0.1:5003
     Value := "Code: 111
         Category: asio.system
         Message: Connection refused
 "
-[WARN] Giving up on connecting to:
-    "127.0.0.1:5003"
-    Value := "Exhausted resolved endpoints list!"
+        7.5 °C
+        16.3 °C
+        41.2 °C
+        -8.2 °C
+        -34.1 °C
+        46.8 °C
+        19.0 °C
+        -25.9 °C
+        -36.6 °C
+        -30.7 °C
+        -22.1 °C
+        32.5 °C
+        -31.5 °C
+        27.4 °C
+        -25.2 °C
+        -12.3 °C
+        18.1 °C
+        -44.6 °C
+        23.1 °C
+        -25.9 °C
+        17.2 °C
+        -19.4 °C
+        30.4 °C
+        -0.1 °C
+        -47.7 °C
+        -27.6 °C
+        36.7 °C
+        -43.5 °C
 
-[WARN] Ensure to a priori launch the sensor node test application(s).
-
-        -40.7 °C
-        27.6 °C
-        -8.5 °C
-        -41.4 °C
-        -12.6 °C
-        -47.3 °C
-        -6.0 °C
-        39.7 °C
-        -34.6 °C
-        -44.3 °C
-        40.0 °C
 ```
 
 After killing all temperature sensor nodes:
 
 ```
-[ERROR] Failure in reading from TCP socket connection:
-    127.0.0.1:5000
+07:25:56 -05:00 - error - [thread 2170] -> Failure in reading from TCP socket connection:
+    "127.0.0.1:5000"
     Value := "Code: 2
         Category: asio.misc
         Message: End of file
 "
-^C[WARN] Signal Received: Closing application orderly, cleanly and gracefully.
+^C07:26:02 -05:00 - warning - [thread 2169] -> Signal Received. Closing application orderly, cleanly and gracefully.
+
 
         --.- °C
-[WARN] : Exiting Dispatcher Worker Thread WorkerThread_V0
+[WARN]: Exiting Dispatcher Worker Thread.
+
 ```
 
 ## EXIT:
