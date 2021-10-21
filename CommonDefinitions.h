@@ -53,7 +53,6 @@
 #include "spdlog/spdlog.h"
 #include "spdlog/fmt/fmt.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
-//#include "spdlog/async.h" //support for async logging.
 
 // fmt library headers:
 #include "fmt/format.h"
@@ -160,6 +159,13 @@ namespace Color
 {
     enum Code
     {
+        // Formatting codes:
+        FT_BOLD           =  1,
+        FT_DARK           =  2,
+        FT_UNDERLINE      =  4,
+        FT_BLINK          =  5,
+        
+        // Foreground colors:
         FG_BLACK          = 30,
         FG_RED            = 31,
         FG_GREEN          = 32,
@@ -169,10 +175,14 @@ namespace Color
         FG_CYAN           = 36,
         FG_LIGHT_GRAY     = 37,
         FG_DEFAULT        = 39,
+        
+        // Background colors:
         BG_RED            = 41,
         BG_GREEN          = 42,
         BG_BLUE           = 44,
         BG_DEFAULT        = 49,
+        
+        // Foreground colors:
         FG_DARK_GRAY      = 90,
         FG_LIGHT_RED      = 91,
         FG_LIGHT_GREEN    = 92,
@@ -407,24 +417,83 @@ namespace Utility
         
         char myThreadName[Utility::RECOMMENDED_BUFFER_SIZE];
         Utility::GetThreadName(myThreadName, sizeof(myThreadName));
-                   
-        std::ostringstream oss;            
-        oss << Color::FG_YELLOW << "[" << myThreadName << "] " 
-            << Color::FG_RED << "{" << Utility::TypeName<T>() << "}: " 
-            << Color::FG_DEFAULT << "\"" << logMessage << "\" :-> ";
-        
-        ((oss << ' ' << args), ...);
-            
-        std::string logString = oss.str();
                     
-        if constexpr (std::is_same_v<T, DebugLog_t> || std::is_same_v<T, TraceLog_t>
-                   || std::is_same_v<T, InfoLog_t>)
+        if constexpr (std::is_same_v<T, DebugLog_t>)
         {
+            std::ostringstream oss;            
+            oss << Color::FG_LIGHT_BLUE << "[" << myThreadName << "] " 
+                << Color::FG_CYAN << "{" << Utility::TypeName<T>() << "}: " 
+                << Color::FG_DEFAULT << "\"" << logMessage << "\"";
+            
+            ((oss << ' ' << args), ...);
+                
+            std::string logString = oss.str();
+        
             std::cout << logString << "\n";
         }
-        else if constexpr (std::is_same_v<T, ErrorLog_t> || std::is_same_v<T, WarnLog_t>
-                        || std::is_same_v<T, CriticalLog_t>)
+        else if constexpr (std::is_same_v<T, TraceLog_t>)
         {
+            std::ostringstream oss;            
+            oss << Color::FG_LIGHT_BLUE << "[" << myThreadName << "] " 
+                << Color::FG_MAGENTA << "{" << Utility::TypeName<T>() << "}: " 
+                << Color::FG_DEFAULT << "\"" << logMessage << "\"";
+            
+            ((oss << ' ' << args), ...);
+                
+            std::string logString = oss.str();
+        
+            std::cout << logString << "\n";
+        }
+        else if constexpr (std::is_same_v<T, InfoLog_t>)
+        {
+            std::ostringstream oss;            
+            oss << Color::FG_LIGHT_BLUE << "[" << myThreadName << "] " 
+                << Color::FG_GREEN << "{" << Utility::TypeName<T>() << "}: " 
+                << Color::FG_DEFAULT << "\"" << logMessage << "\"";
+            
+            ((oss << ' ' << args), ...);
+                
+            std::string logString = oss.str();
+        
+            std::cout << logString << "\n";
+        }
+        else if constexpr (std::is_same_v<T, ErrorLog_t>)
+        {
+            std::ostringstream oss;            
+            oss << Color::FG_LIGHT_BLUE << "[" << myThreadName << "] " 
+                << Color::FG_RED << Color::FT_BOLD << "{" << Utility::TypeName<T>() << "}: " 
+                << Color::FG_DEFAULT << "\"" << logMessage << "\"";
+            
+            ((oss << ' ' << args), ...);
+                
+            std::string logString = oss.str();
+        
+            std::cerr << logString << "\n";
+        }
+        else if constexpr (std::is_same_v<T, WarnLog_t>)
+        {
+            std::ostringstream oss;            
+            oss << Color::FG_LIGHT_BLUE << "[" << myThreadName << "] " 
+                << Color::FG_YELLOW << Color::FT_BOLD << "{" << Utility::TypeName<T>() << "}: " 
+                << Color::FG_DEFAULT << "\"" << logMessage << "\"";
+            
+            ((oss << ' ' << args), ...);
+                
+            std::string logString = oss.str();
+        
+            std::cerr << logString << "\n";
+        }
+        else if constexpr (std::is_same_v<T, CriticalLog_t>)
+        {
+            std::ostringstream oss;            
+            oss << Color::FG_LIGHT_BLUE << "[" << myThreadName << "] " 
+                << Color::FG_RED << Color::FT_BOLD << Color::FT_BLINK << "{" << Utility::TypeName<T>() << "}: " 
+                << Color::FG_DEFAULT << "\"" << logMessage << "\"";
+            
+            ((oss << ' ' << args), ...);
+                
+            std::string logString = oss.str();
+        
             std::cerr << logString << "\n";
         }
     };

@@ -50,7 +50,7 @@ int main([[maybe_unused]]int argc, [[maybe_unused]]char* argv[])
     //spdlog::drop_all();
     spdlog::shutdown();
     
-    Utility::NonInterspersedLog<TraceLog_t>("Ending C++20 Design Exercise Program...");
+    Utility::NonInterspersedLog<CriticalLog_t>("Ending C++20 Design Exercise Program...");
 
     return 0;
 }

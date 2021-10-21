@@ -868,6 +868,67 @@ After killing all temperature sensor nodes:
         --.- °C
 [WARN]: Exiting Dispatcher Worker Thread.
 
+```
+
+## INTEGRATION WITH Utility::NonInterspersedLog<>() - EXECUTION OUTPUT WITH 4 TEMPERATURE SENSOR NODES:
+
+APPLICATION:
+```
+./build/TemperatureReadoutApp
+[TemperatureRead] {TraceLog_t}: "Beginning C++20 Design Exercise Program..." :-> 
+        --.- °C
+[WorkerThread_HQ] {InfoLog_t}: "Parent just created us, a thread." :-> 
+[WorkerThread_HQ] {InfoLog_t}: "Connecting to TCP endpoint :-> 127.0.0.1:5000" :-> 
+[WorkerThread_HQ] {TraceLog_t}: "Successfully connected to "127.0.0.1:5000"" :-> 
+[WorkerThread_HQ] {InfoLog_t}: "Connecting to TCP endpoint :-> 127.0.0.1:5001" :-> 
+[WorkerThread_HQ] {TraceLog_t}: "Successfully connected to "127.0.0.1:5001"" :-> 
+[WorkerThread_HQ] {InfoLog_t}: "Connecting to TCP endpoint :-> 127.0.0.1:5002" :-> 
+[WorkerThread_HQ] {TraceLog_t}: "Successfully connected to "127.0.0.1:5002"" :-> 
+[WorkerThread_HQ] {InfoLog_t}: "Connecting to TCP endpoint :-> 127.0.0.1:5003" :-> 
+[WorkerThread_HQ] {TraceLog_t}: "Successfully connected to "127.0.0.1:5003"" :-> 
+[WorkerThread_HQ] {TraceLog_t}: "ALL temperature sensor nodes have been successfully connected to." :-> 
+        -22.1 °C
+        -5.4 °C
+        -29.8 °C
+        -12.0 °C
+        29.3 °C
+        2.0 °C
+        -47.2 °C
+        17.3 °C
+        -48.0 °C
+        -42.0 °C
+        -0.0 °C
+        24.3 °C
+        -42.1 °C
+        6.5 °C
+        -24.2 °C
+        -0.1 °C
+        14.8 °C
+        -16.4 °C
+        -10.6 °C
+        -10.7 °C
+        22.5 °C
+        6.4 °C
+        -47.0 °C
+        -4.4 °C
+```
+
+After killing all temperature sensor nodes:
+
+```
+[WorkerThread_HQ] {ErrorLog_t}: "Failure in reading from TCP socket connection:
+    "127.0.0.1:5000"
+    Value := "Code: 2
+        Category: asio.misc
+        Message: End of file
+"" :-> 
+^C[TemperatureRead] {WarnLog_t}: "Signal Received. Closing application orderly, cleanly and gracefully.
+
+" :-> 
+        --.- °C
+[WorkerThread_HQ] {WarnLog_t}: "Exiting Dispatcher Worker Thread." :-> 
+[TemperatureRead] {TraceLog_t}: "Ending C++20 Design Exercise Program..." :-> 
+
 
 ```
 

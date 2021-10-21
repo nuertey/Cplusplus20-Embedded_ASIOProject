@@ -71,7 +71,7 @@ namespace Common
         // and on which particular thread 'terminator' signal handler is
         // always chosen to run by blocking those terminator signals 
         // within ALL other children thread contexts.
-        //Utility::BlockTerminatorSignals(SIGTERM, SIGINT, SIGQUIT);
+        Utility::BlockTerminatorSignals(SIGTERM, SIGINT, SIGQUIT);
         
         // To aid debugging by means of strace, ps, valgrind, gdb, and
         // variants, name our created threads. 
@@ -120,7 +120,7 @@ namespace Common
         //spdlog::warn("Exiting Dispatcher Worker Thread {0}", myThreadName);
         //spdlog::warn("Exiting Dispatcher Worker Thread.");
         //std::cout << "[WARN]: Exiting Dispatcher Worker Thread." << "\n";
-        Utility::NonInterspersedLog<WarnLog_t>("Exiting Dispatcher Worker Thread.");
+        Utility::NonInterspersedLog<CriticalLog_t>("Exiting Dispatcher Worker Thread.");
     };
 }
 
@@ -175,41 +175,4 @@ void SessionManager::AsyncLog(const std::string& logMessage, Args&&... args)
     std::string logString = oss.str();
                 
     Utility::NonInterspersedLog<T>(logString);
-
-//    if constexpr (std::is_same_v<T, DebugLog_t>)
-//    {
-//        spdlog::debug("{}", logString);
-//        //std::cout << logString << "\n";
-//    }
-//    else if constexpr (std::is_same_v<T, TraceLog_t>)
-//    {
-//        spdlog::trace("{}", logString);
-//        //std::cout << logString << "\n";
-//    }
-//    else if constexpr (std::is_same_v<T, InfoLog_t>)
-//    {
-//        spdlog::info("{}", logString);
-//        //std::cout << logString << "\n";
-//    }
-//    else if constexpr (std::is_same_v<T, ErrorLog_t>)
-//    {
-//        spdlog::error("{}", logString);
-//        //std::cerr << logString << "\n";
-//    }
-//    else if constexpr (std::is_same_v<T, WarnLog_t>)
-//    {
-//        spdlog::warn("{}", logString);
-//        //std::cerr << logString << "\n";
-//    }
-//    else if constexpr (std::is_same_v<T, CriticalLog_t>)
-//    {
-//        spdlog::critical("{}", logString);
-//        //std::cerr << logString << "\n";
-//    }
-//    else
-//    {
-//        std::cerr << "WARN: Type T is UNEXPECTED!" << "\n";
-//        std::cerr << "\t" << Utility::TypeName<T>() << "\n";
-//        std::cerr << "\t\"" << logString << "\"\n";
-//    }
 }
