@@ -356,11 +356,44 @@ namespace Utility
             ...
         );
     };
+
+    const auto BlockTerminatorSignals = [](auto ...signalArgs)
+    {
+        // As is obvious from the above, signalArgs is a variadic template 
+        // that specifies the set of 'program-terminating' signals. Per 
+        // the sigaction() system call specifications, these signals can
+        // comprise any valid set of POSIX signals with the exception of
+        // SIGKILL and SIGSTOP. Ensure then to explicitly and forcibly
+        // enforce that requirement:               
+        (
+            assert(((void)"Signal argument CANNOT be SIGKILL or SIGSTOP", 
+                   ((signalArgs != SIGKILL) && (signalArgs != SIGSTOP))))
+                ,
+                ...
+        );
+        
+        sigset_t mask;
+        sigemptyset(&mask); 
+                    
+        // Leverage 'Fold Expressions in C++17' to resolve the parameter
+        // pack expansion.
+        (
+            sigaddset(&mask, signalArgs)
+            ,
+            ...
+        );
+        
+        pthread_sigmask(SIG_BLOCK, &mask, NULL);
+    };
     
     // Log colored output to the console but in a truly thread-safe and 
     // non-interleaved character way:
-    const auto NonInterspersedLog = []<typename T>(const std::string_view& logMessage,
-                                                   auto ...args)
+    
+    // Due to a more involved syntax when invoking template lambdas, 
+    // rather prefer template function to a C++20 template lambda.
+    template <typename T, typename... Args>
+    inline void NonInterspersedLog(const std::string_view& logMessage,
+                                   Args&&... args)
     {
         static_assert((std::is_same_v<T, DebugLog_t>
                     || std::is_same_v<T, TraceLog_t>

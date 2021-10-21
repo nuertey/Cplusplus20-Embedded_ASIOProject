@@ -51,7 +51,8 @@ namespace Common
         catch (const std::exception& e)
         {
             //spdlog::error("Caught an exception! {0}", e.what());
-            std::cerr << "[ERROR]: Caught an exception!" << e.what() << "\n";
+            //std::cerr << "[ERROR]: Caught an exception!" << e.what() << "\n";
+            Utility::NonInterspersedLog<ErrorLog_t>("Caught an exception!", e.what());
         }
     }
 
@@ -136,11 +137,6 @@ using SensorPack_t = std::array<SensorNode_t, NUMBER_OF_SENSOR_NODES>;
 
 // Also value-initialize all sensor node abstractions.
 static SensorPack_t g_TheCustomerSensors{};
-
-// Definition of async logger static member in order to yield complete
-// static member type:
-//std::shared_ptr<spdlog::logger> SessionManager::m_pAsyncLogger = 
-//    spdlog::stdout_color_mt<spdlog::async_factory>("async_file_logger");
 
 SessionManager::SessionManager()
     : m_NumberOfConnectedSockets(0)

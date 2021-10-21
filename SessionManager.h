@@ -67,21 +67,28 @@ namespace Common
     // not encountered during linking. 
     const auto DispatcherWorkerThread = []()
     {   
+        // To further guarantee deterministic nature of signal handling
+        // and on which particular thread 'terminator' signal handler is
+        // always chosen to run by blocking those terminator signals 
+        // within ALL other children thread contexts.
+        //Utility::BlockTerminatorSignals(SIGTERM, SIGINT, SIGQUIT);
+        
         // To aid debugging by means of strace, ps, valgrind, gdb, and
         // variants, name our created threads. 
-        //std::string namePrefix("WorkerThread_");
-        //std::string nameSuffix(3, '*');
-        //Utility::RandLibStringGenerator generator{};
-        //std::generate(nameSuffix.begin(), nameSuffix.end(), generator);
-        //std::string uniqueName = namePrefix + nameSuffix;
-        //
+        std::string namePrefix("WorkerThread_");
+        std::string nameSuffix(3, '*');
+        Utility::RandLibStringGenerator generator{};
+        std::generate(nameSuffix.begin(), nameSuffix.end(), generator);
+        std::string uniqueName = namePrefix + nameSuffix;
+        
         //char myThreadName[Utility::RECOMMENDED_BUFFER_SIZE];
-        //Utility::SetThreadName(uniqueName.c_str());
+        Utility::SetThreadName(uniqueName.c_str());
         //Utility::GetThreadName(myThreadName, sizeof(myThreadName));
 
-        //spdlog::info("Parent just created a thread. ThreadName = {0}", myThreadName);
-        //spdlog::info("Parent just created a thread.");
-        std::cout << "[INFO]: Parent just created a thread." << "\n";
+        //spdlog::info("Parent just created us, a thread. ThreadName = {0}", myThreadName);
+        //spdlog::info("Parent just created us, a thread.");
+        //std::cout << "[INFO]: Parent just created us, a thread." << "\n";
+        Utility::NonInterspersedLog<InfoLog_t>("Parent just created us, a thread.");
 
         // TBD Nuertey Odzeyem; were I truly compiling on an Embedded
         // system, I would have optimized these C++ exceptions completely
@@ -106,12 +113,14 @@ namespace Common
         catch (const std::exception& e)
         {
             //spdlog::error("Caught an exception! {0}", e.what());
-            std::cerr << "[ERROR]: Caught an exception!" << e.what() << "\n";
+            //std::cerr << "[ERROR]: Caught an exception!" << e.what() << "\n";
+            Utility::NonInterspersedLog<ErrorLog_t>("Caught an exception!", e.what());
         }
 
         //spdlog::warn("Exiting Dispatcher Worker Thread {0}", myThreadName);
         //spdlog::warn("Exiting Dispatcher Worker Thread.");
-        std::cout << "[WARN]: Exiting Dispatcher Worker Thread." << "\n";
+        //std::cout << "[WARN]: Exiting Dispatcher Worker Thread." << "\n";
+        Utility::NonInterspersedLog<WarnLog_t>("Exiting Dispatcher Worker Thread.");
     };
 }
 
@@ -140,14 +149,9 @@ private:
     uint8_t                     m_NumberOfConnectedSockets;
     std::mutex                  m_TheDisplayMutex;
     SystemClock_t::time_point   m_LastReadoutTime;
-
-public:    
-    // Log exceptions output to the console but in a truly thread-safe 
-    // non-interleaved character way by leveraging spdlog async logger:
-    //static std::shared_ptr<spdlog::logger>   m_pAsyncLogger;
 };
 
-template<typename T, typename... Args>
+template <typename T, typename... Args>
 void SessionManager::AsyncLog(const std::string& logMessage, Args&&... args)
 {
     static_assert((std::is_same_v<T, DebugLog_t>
@@ -170,40 +174,42 @@ void SessionManager::AsyncLog(const std::string& logMessage, Args&&... args)
         
     std::string logString = oss.str();
                 
-    if constexpr (std::is_same_v<T, DebugLog_t>)
-    {
-        spdlog::debug("{}", logString);
-        //std::cout << logString << "\n";
-    }
-    else if constexpr (std::is_same_v<T, TraceLog_t>)
-    {
-        spdlog::trace("{}", logString);
-        //std::cout << logString << "\n";
-    }
-    else if constexpr (std::is_same_v<T, InfoLog_t>)
-    {
-        spdlog::info("{}", logString);
-        //std::cout << logString << "\n";
-    }
-    else if constexpr (std::is_same_v<T, ErrorLog_t>)
-    {
-        spdlog::error("{}", logString);
-        //std::cerr << logString << "\n";
-    }
-    else if constexpr (std::is_same_v<T, WarnLog_t>)
-    {
-        spdlog::warn("{}", logString);
-        //std::cerr << logString << "\n";
-    }
-    else if constexpr (std::is_same_v<T, CriticalLog_t>)
-    {
-        spdlog::critical("{}", logString);
-        //std::cerr << logString << "\n";
-    }
-    else
-    {
-        std::cerr << "WARN: Type T is UNEXPECTED!" << "\n";
-        std::cerr << "\t" << Utility::TypeName<T>() << "\n";
-        std::cerr << "\t\"" << logString << "\"\n";
-    }
+    Utility::NonInterspersedLog<T>(logString);
+
+//    if constexpr (std::is_same_v<T, DebugLog_t>)
+//    {
+//        spdlog::debug("{}", logString);
+//        //std::cout << logString << "\n";
+//    }
+//    else if constexpr (std::is_same_v<T, TraceLog_t>)
+//    {
+//        spdlog::trace("{}", logString);
+//        //std::cout << logString << "\n";
+//    }
+//    else if constexpr (std::is_same_v<T, InfoLog_t>)
+//    {
+//        spdlog::info("{}", logString);
+//        //std::cout << logString << "\n";
+//    }
+//    else if constexpr (std::is_same_v<T, ErrorLog_t>)
+//    {
+//        spdlog::error("{}", logString);
+//        //std::cerr << logString << "\n";
+//    }
+//    else if constexpr (std::is_same_v<T, WarnLog_t>)
+//    {
+//        spdlog::warn("{}", logString);
+//        //std::cerr << logString << "\n";
+//    }
+//    else if constexpr (std::is_same_v<T, CriticalLog_t>)
+//    {
+//        spdlog::critical("{}", logString);
+//        //std::cerr << logString << "\n";
+//    }
+//    else
+//    {
+//        std::cerr << "WARN: Type T is UNEXPECTED!" << "\n";
+//        std::cerr << "\t" << Utility::TypeName<T>() << "\n";
+//        std::cerr << "\t\"" << logString << "\"\n";
+//    }
 }
