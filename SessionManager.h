@@ -115,14 +115,6 @@ namespace Common
     };
 }
 
-// Metaprogramming types to distinguish the logging category:
-struct DebugLog_t {};
-struct TraceLog_t {};
-struct InfoLog_t {};
-struct ErrorLog_t {};
-struct WarnLog_t {};
-struct CriticalLog_t {};
-
 class SessionManager : public std::enable_shared_from_this<SessionManager>
 {
     static constexpr short EPHEMERAL_PORT_NUMBER_BASE_VALUE = 5000;

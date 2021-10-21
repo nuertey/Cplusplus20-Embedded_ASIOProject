@@ -314,7 +314,7 @@ pwd
 rm -rf build
 mkdir build
 meson build/
-ninja -C build
+/home/nuertey/py37-venv/bin/ninja -C build
 ```
 
 ## EXECUTION EXAMPLES:

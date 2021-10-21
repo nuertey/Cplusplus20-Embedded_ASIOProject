@@ -156,6 +156,14 @@ private:
     std::ios::fmtflags    m_flags;
 };
 
+// Metaprogramming types to distinguish the logging category:
+struct DebugLog_t {};
+struct TraceLog_t {};
+struct InfoLog_t {};
+struct ErrorLog_t {};
+struct WarnLog_t {};
+struct CriticalLog_t {};
+
 namespace Utility 
 {  
     template <typename T, typename U>
@@ -175,7 +183,7 @@ namespace Utility
         suffix = "]";
     #elif defined(__GNUC__)
         name = __PRETTY_FUNCTION__;
-        prefix = "constexpr auto Utility::TypeName() [with ";
+        prefix = "constexpr auto Utility::TypeName() [with T = ";
         suffix = "]";
     #elif defined(_MSC_VER)
         name = __FUNCSIG__;
@@ -315,5 +323,44 @@ namespace Utility
             ,
             ...
         );
+    };
+    
+    // Log colored output to the console but in a truly thread-safe and 
+    // non-interleaved character way:
+    const auto NonInterspersedLog = []<typename T>(const std::string_view& logMessage,
+                                                   auto ...args)
+    {
+        static_assert((std::is_same_v<T, DebugLog_t>
+                    || std::is_same_v<T, TraceLog_t>
+                    || std::is_same_v<T, InfoLog_t>
+                    || std::is_same_v<T, ErrorLog_t>
+                    || std::is_same_v<T, WarnLog_t>
+                    || std::is_same_v<T, CriticalLog_t>),
+        "Hey! Logging category MUST be one of the following:\n\tDebugLog_t \
+                    \n\tTraceLog_t \n\tInfoLog_t \n\tErrorLog_t \
+                    \n\tWarnLog_t \n\tFatalLog_t");
+        
+        char myThreadName[Utility::RECOMMENDED_BUFFER_SIZE];
+        Utility::GetThreadName(myThreadName, sizeof(myThreadName));
+                   
+        std::ostringstream oss;            
+        oss << "[" << myThreadName << "] " 
+            << "{" << Utility::TypeName<T>() << "}: " 
+            << "\"" << logMessage << "\" :-> ";
+        
+        ((oss << ' ' << args), ...);
+            
+        std::string logString = oss.str();
+                    
+        if constexpr (std::is_same_v<T, DebugLog_t> || std::is_same_v<T, TraceLog_t>
+                   || std::is_same_v<T, InfoLog_t>)
+        {
+            std::cout << logString << "\n";
+        }
+        else if constexpr (std::is_same_v<T, ErrorLog_t> || std::is_same_v<T, WarnLog_t>
+                        || std::is_same_v<T, CriticalLog_t>)
+        {
+            std::cerr << logString << "\n";
+        }
     };
 }
