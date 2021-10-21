@@ -156,6 +156,38 @@ private:
     std::ios::fmtflags    m_flags;
 };
 
+namespace Color
+{
+    enum Code
+    {
+        FG_BLACK          = 30,
+        FG_RED            = 31,
+        FG_GREEN          = 32,
+        FG_YELLOW         = 33,
+        FG_BLUE           = 34,
+        FG_MAGENTA        = 35,
+        FG_CYAN           = 36,
+        FG_LIGHT_GRAY     = 37,
+        FG_DEFAULT        = 39,
+        BG_RED            = 41,
+        BG_GREEN          = 42,
+        BG_BLUE           = 44,
+        BG_DEFAULT        = 49,
+        FG_DARK_GRAY      = 90,
+        FG_LIGHT_RED      = 91,
+        FG_LIGHT_GREEN    = 92,
+        FG_LIGHT_YELLOW   = 93,
+        FG_LIGHT_BLUE     = 94,
+        FG_LIGHT_MAGENTA  = 95,
+        FG_LIGHT_CYAN     = 96,
+        FG_WHITE          = 97
+    };
+    inline std::ostream& operator<<(std::ostream& os, Code code)
+    {
+        return os << "\033[" << static_cast<int>(code) << "m";
+    }
+}
+
 // Metaprogramming types to distinguish the logging category:
 struct DebugLog_t {};
 struct TraceLog_t {};
@@ -344,9 +376,9 @@ namespace Utility
         Utility::GetThreadName(myThreadName, sizeof(myThreadName));
                    
         std::ostringstream oss;            
-        oss << "[" << myThreadName << "] " 
-            << "{" << Utility::TypeName<T>() << "}: " 
-            << "\"" << logMessage << "\" :-> ";
+        oss << Color::FG_YELLOW << "[" << myThreadName << "] " 
+            << Color::FG_RED << "{" << Utility::TypeName<T>() << "}: " 
+            << Color::FG_DEFAULT << "\"" << logMessage << "\" :-> ";
         
         ((oss << ' ' << args), ...);
             
