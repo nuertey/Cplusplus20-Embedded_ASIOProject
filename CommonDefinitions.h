@@ -208,8 +208,12 @@ struct CriticalLog_t {};
 
 namespace Utility 
 {  
+    // This utility is for general type comparison cases where the types
+    // to be compared's cv qualifiers are not guaranteed. For specific 
+    // cases, use std::is_same_v<> directly as in ::NonInterspersedLog<>()
+    // templatized lambda far below.
     template <typename T, typename U>
-    struct TrueTypesEquivalent : std::is_same<typename std::decay<T>::type, U>::type
+    struct TrueTypesEquivalent : std::is_same<typename std::decay_t<T>, U>::type
     {};
     
     template <typename T>
