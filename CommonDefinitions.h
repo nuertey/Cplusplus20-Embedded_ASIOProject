@@ -426,7 +426,7 @@ namespace Utility
         {
             std::ostringstream oss;            
             oss << Color::FG_LIGHT_BLUE << "[" << myThreadName << "] " 
-                << Color::FG_CYAN << "{" << Utility::TypeName<T>() << "}: " 
+                << Color::FG_LIGHT_CYAN << "{" << Utility::TypeName<T>() << "}: " 
                 << Color::FG_DEFAULT << "\"" << logMessage << "\"";
             
             ((oss << ' ' << args), ...);
@@ -465,7 +465,7 @@ namespace Utility
         {
             std::ostringstream oss;            
             oss << Color::FG_LIGHT_BLUE << "[" << myThreadName << "] " 
-                << Color::FG_RED << Color::FT_BOLD << "{" << Utility::TypeName<T>() << "}: " 
+                << Color::FG_LIGHT_RED << "{" << Utility::TypeName<T>() << "}: " 
                 << Color::FG_DEFAULT << "\"" << logMessage << "\"";
             
             ((oss << ' ' << args), ...);
@@ -491,7 +491,7 @@ namespace Utility
         {
             std::ostringstream oss;            
             oss << Color::FG_LIGHT_BLUE << "[" << myThreadName << "] " 
-                << Color::FG_RED << Color::FT_BOLD << Color::FT_BLINK << "{" << Utility::TypeName<T>() << "}: " 
+                << Color::FG_RED << Color::FT_BOLD << "{" << Utility::TypeName<T>() << "}: " 
                 << Color::FG_DEFAULT << "\"" << logMessage << "\"";
             
             ((oss << ' ' << args), ...);
