@@ -79,6 +79,18 @@
 #include "Threading.h"
 #include "randutils.hpp"
 
+#if __has_include(<format>)
+#include <format>
+#endif
+
+#ifdef __cpp_lib_format
+    // Code with std::format
+#else
+    // Code without std::format, or just #error if you only
+    // want to support compilers and standard libraries with std::format
+#endif
+
+
 using SystemClock_t = std::chrono::system_clock;
 using Seconds_t     = std::chrono::seconds;
 using Minutes_t     = std::chrono::minutes;

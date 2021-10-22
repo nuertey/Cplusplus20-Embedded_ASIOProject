@@ -235,6 +235,8 @@ void SessionManager::AsyncConnect(const uint8_t& sensorNodeNumber,
         {
             endpoint1 = *it;
             
+            // TBD Nuertey Odzeyem; Use C++20 std::format() when eventually
+            // implemented by the compiler instead of the fmt library. 
             std::string logMessage = fmt::format(
                 "Connecting to TCP endpoint :-> {}", endpoint1);
         
