@@ -59,7 +59,7 @@ void terminator(int signalNumber)
 {
     if ((SIGTERM == signalNumber) || (SIGINT == signalNumber) || (SIGQUIT == signalNumber))
     {
-        // One a single threaded process, when a signal arrives, that 
+        // On a single threaded process, when a signal arrives, that 
         // main thread usually completes its currently-executing 
         // instruction, services the signal via the signal handler before
         // returning to resume its former execution path. So in this 
@@ -76,7 +76,7 @@ void terminator(int signalNumber)
         // prediction.
         //
         // The caveat to all the above is, if the signal is an exception
-        // (SIGSEGV, SIGFPE, SIGBUS, SIGILL, …) that signal would 
+        // (SIGSEGV, SIGFPE, SIGBUS, SIGILL, etc.) that signal would 
         // usually be caught by the thread raising that exception.
         //
         // Further note that though signal handlers are written to accept

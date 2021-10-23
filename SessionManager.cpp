@@ -351,6 +351,11 @@ void SessionManager::HandleConnect(const std::error_code& error,
     }
     else
     {
+        // TBD Nuertey Odzeyem; as an alternative, do note that C++20 
+        // std::format() and its corresponding parent, fmt::format() now
+        // support std::error_code direct inserters per document # P1636:
+        //
+        // "Formatters For Library Types" by Lars Gullik Bjønnes. 
         std::ostringstream oss;
 
         oss << "Code: " << error.value() << '\n';
@@ -370,8 +375,10 @@ void SessionManager::HandleConnect(const std::error_code& error,
         //std::cerr << logMessage << "\n";
                   
         // We need to close the socket used in the previous connection
-        // attempt before re-attempting to start a new one. Do NOT do this
-        // so application can continue monitoring the other connections.
+        // attempt before re-attempting to start a new one. 
+        //
+        // ADDENDUM: Do NOT do this now so application can continue 
+        // monitoring the other connections.
         //g_TheCustomerSensors[sensorNodeNumber].m_ConnectionSocket.close();
 
         // Try the next available endpoint for the same sensor.
@@ -424,6 +431,11 @@ void SessionManager::ReceiveTemperatureData(const uint8_t& sensorNodeNumber)
         }
         else
         {
+            // TBD Nuertey Odzeyem; as an alternative, do note that C++20 
+            // std::format() and its corresponding parent, fmt::format() now
+            // support std::error_code direct inserters per document # P1636:
+            //
+            // "Formatters For Library Types" by Lars Gullik Bjønnes. 
             std::ostringstream oss;
 
             oss << "Code: " << error.value() << '\n';

@@ -54,8 +54,21 @@
 #include "spdlog/fmt/fmt.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 
-// fmt library headers:
-#include "fmt/format.h"
+//#if __has_include(<format>)
+//    #include <format>
+//#else
+    // fmt library headers:
+    #include "fmt/format.h"
+//#endif
+
+// TBD Nuertey Odzeyem; the below is how you would use the above in a 
+// portable manner once support for std::format is added to the compiler.
+#ifdef __cpp_lib_format
+    // Code with std::format
+#else
+    // Code without std::format, or just #error if you only
+    // want to support compilers and standard libraries with std::format
+#endif
 
 // ASIO C++ Networking Library:
 #include <asio.hpp>
@@ -78,18 +91,6 @@
 // Non-Standard Headers:
 #include "Threading.h"
 #include "randutils.hpp"
-
-#if __has_include(<format>)
-#include <format>
-#endif
-
-#ifdef __cpp_lib_format
-    // Code with std::format
-#else
-    // Code without std::format, or just #error if you only
-    // want to support compilers and standard libraries with std::format
-#endif
-
 
 using SystemClock_t = std::chrono::system_clock;
 using Seconds_t     = std::chrono::seconds;
@@ -264,12 +265,6 @@ namespace Utility
     {
         if (!g_ConsoleLogger)
         {
-            // Default thread pool settings can be modified *before* 
-            // creating the logger(s):
-            //
-            // Queue with 8k items and 10 backing threads (default is 1).
-            //spdlog::init_thread_pool(8192, 10); 
-
             // Multi-threaded console logger (with color support)
             g_ConsoleLogger = spdlog::stdout_color_mt("console");
             
