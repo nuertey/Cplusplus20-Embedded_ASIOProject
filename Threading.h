@@ -47,6 +47,24 @@ namespace Utility
     const size_t    THREAD_NAME_LENGTH          = 16;  // Length is restricted by the OS. Includes null-termination.
     const size_t    RECOMMENDED_BUFFER_SIZE     = 20;  // For retrievals; must be at least 16; OS will null-terminate.
 
+    // Set the given thread's affinity to be exclusively on the given 
+    // logical CPU number.
+    inline void PinThreadToCPU(std::thread& t, int cpuNumber)
+    {
+        cpu_set_t cpuset;
+        CPU_ZERO(&cpuset);
+        CPU_SET(cpuNumber, &cpuset);
+        int rc = pthread_setaffinity_np(t.native_handle(), 
+                                        sizeof(cpu_set_t), 
+                                        &cpuset);
+        if (rc != 0)
+        {
+            std::cerr << __PRETTY_FUNCTION__ 
+                      << ": Error calling pthread_setaffinity_np: " 
+                      << rc << "\n";
+        }
+    }
+
     /*****************************************************************************
     * Convert the current thread into a realtime thread at the specified priority
     * level.
