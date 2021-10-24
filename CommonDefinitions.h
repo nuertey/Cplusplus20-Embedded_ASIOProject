@@ -414,7 +414,7 @@ namespace Utility
     // rather prefer template function to a C++20 template lambda.
     template <typename T, typename... Args>
     inline void NonInterspersedLog(const std::string_view& logMessage,
-                                   Args&&... args)
+                                   const Args&... args)
     {
         static_assert((std::is_same_v<T, DebugLog_t>
                     || std::is_same_v<T, TraceLog_t>
