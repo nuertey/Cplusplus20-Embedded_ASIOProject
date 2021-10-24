@@ -340,12 +340,7 @@ namespace Utility
                
         // Leverage 'Fold Expressions in C++17' to resolve the parameter
         // pack expansion.
-        (
-            assert(((void)"Signal argument CANNOT be SIGKILL or SIGSTOP", 
-                   ((signalArgs != SIGKILL) && (signalArgs != SIGSTOP))))
-                ,
-                ...
-        );
+        (assert(((void)"Signal argument CANNOT be SIGKILL or SIGSTOP", (signalArgs != SIGKILL) && (signalArgs != SIGSTOP))), ...);
         
         // Leverage an RAII-like Design Pattern to setup the sigaction()
         // system call so we catch application 'terminator' signals:
@@ -371,11 +366,7 @@ namespace Utility
         
         // Leverage 'Fold Expressions in C++17' to resolve the parameter
         // pack expansion.
-        (
-            sigaction(signalArgs, &action, NULL)
-            ,
-            ...
-        );
+        (sigaction(signalArgs, &action, NULL), ...);
     };
 
     const auto BlockTerminatorSignals = [](auto ...signalArgs)
@@ -386,23 +377,14 @@ namespace Utility
         // comprise any valid set of POSIX signals with the exception of
         // SIGKILL and SIGSTOP. Ensure then to explicitly and forcibly
         // enforce that requirement:               
-        (
-            assert(((void)"Signal argument CANNOT be SIGKILL or SIGSTOP", 
-                   ((signalArgs != SIGKILL) && (signalArgs != SIGSTOP))))
-                ,
-                ...
-        );
+        (assert(((void)"Signal argument CANNOT be SIGKILL or SIGSTOP", (signalArgs != SIGKILL) && (signalArgs != SIGSTOP))), ...);
         
         sigset_t mask;
         sigemptyset(&mask); 
                     
         // Leverage 'Fold Expressions in C++17' to resolve the parameter
         // pack expansion.
-        (
-            sigaddset(&mask, signalArgs)
-            ,
-            ...
-        );
+        (sigaddset(&mask, signalArgs), ...);
         
         pthread_sigmask(SIG_BLOCK, &mask, NULL);
     };
