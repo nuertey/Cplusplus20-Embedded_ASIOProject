@@ -6,7 +6,7 @@ int main([[maybe_unused]]int argc, [[maybe_unused]]char* argv[])
 {
     Utility::NonInterspersedLog<TraceLog_t>("Beginning C++20 Design Exercise Program...");
     
-    Utility::InitializeLogger();
+    Utility::InitializeLogger(); 
     
     // Setup and run the one worker thread and one io_context that we 
     // need to successfully serialize all operations expected from the 
@@ -23,6 +23,10 @@ int main([[maybe_unused]]int argc, [[maybe_unused]]char* argv[])
     // 'terminator' signal handler is always chosen to run by blocking
     // those terminator signals within ALL other children thread contexts.
     Utility::SetupTerminatorSignals(terminator, SIGTERM, SIGINT, SIGQUIT);
+    
+    // Install system crash handler that leverages libunwind backtracing
+    // utilities and have it monitor for the default core dump signals.
+    Utility::InstallCrashHandler(Utility::CrashHandlerLibunwind);
 
     // Be aware that if the program is forcibly halted whilst the SessionManager
     // is still constructing and connecting to the sockets, then by design,

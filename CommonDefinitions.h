@@ -348,6 +348,170 @@ namespace Utility
     private:
     };
     
+    inline void CrashHandler(int signum, siginfo_t * siginfo, void * context)
+    {
+        const size_t MAX_DEPTH = 30;
+        size_t stack_depth;
+        void *stack_addrs[MAX_DEPTH];
+        char **stack_strings;
+        std::ostringstream oss; 
+        
+        oss << "\nBacktrace Crash Call Stack Using GLIBC Utilities:\n" << std::endl;
+
+        stack_depth = backtrace(stack_addrs, MAX_DEPTH);
+        
+        // Restore the faulting address:
+        #if defined(__i386__)
+            stack_addrs[2] = (void *)(((ucontext_t *)context)->uc_mcontext.gregs[REG_EIP]);
+        #elif defined(__x86_64__)
+            stack_addrs[2] = (void *)(((ucontext_t *)context)->uc_mcontext.gregs[REG_RIP]);
+        #elif defined(__arm__)
+            stack_addrs[2] = (void *)(((ucontext_t *)context)->uc_mcontext.arm_pc);
+        #else
+            #error "Unsupported platform."
+        #endif
+
+        oss << "{FatalLog_t} Beginning backtrace for signal: " << signum << "\n";
+        oss << "{FatalLog_t} Sent by PID: " << siginfo->si_pid << "\n\n";
+        if (siginfo->si_addr) 
+        {   
+            oss << "{FatalLog_t} Pointer to location of error: 0x" 
+                << std::hex << std::uppercase << siginfo->si_addr << "\n\n";
+        }
+        
+        stack_strings = backtrace_symbols(stack_addrs, stack_depth);
+
+        for (size_t i = 0; i < stack_depth; i++)
+        {
+            // TBD Nuertey Odzeyem; A guess for now. Enhance later due
+            // to in-depth research as template names will be much wider.
+            size_t sz = 256; 
+            char *function = (char*)malloc(sz);
+            char *begin = 0, *end = 0;
+
+            // Find the parentheses and address offset surrounding the
+            // mangled name.
+            for (char *j = stack_strings[i]; *j; ++j)
+            {
+                if (*j == '(')
+                {
+                    begin = j;
+                }
+                else if (*j == '+')
+                {
+                    end = j;
+                }
+            }
+
+            if (begin && end)
+            {
+                *begin++ = 0;
+                std::string full_func_name(end);
+                *end = 0; // Found our mangled name, now in [begin, end)
+
+                int status;
+                char *ret = abi::__cxa_demangle(begin, function, &sz, &status);
+
+                if (ret)
+                {
+                    // Return value may be a realloc() of the input.
+                    function = ret;
+                }
+                else
+                {
+                    // Demangling failed, just pretend it's a C function with no args.
+                    std::strncpy(function, begin, sz);
+                    std::strncat(function, "()", sz);
+                    function[sz-1] = 0;
+                }
+
+                oss << "    " << stack_strings[i] << ":" << function 
+                    << " {" << full_func_name << "}" << std::endl;
+            }
+            else
+            {
+                // Did not find the mangled name, just print the whole line.
+                oss << "    " << stack_strings[i] << std::endl;
+            }
+            free(function);
+        }
+
+        free(stack_strings); // malloc()ed by backtrace_symbols
+        
+        std::cerr << oss.str() << std::endl;
+        
+        // resend the signal to the default handler in order to produce a core dump
+        (void) signal(signum, SIG_DFL);
+        (void) kill(syscall(__NR_gettid), signum);
+    }
+    
+    inline void CrashHandlerLibunwind(int signum, siginfo_t * siginfo, void * context)
+    {
+        std::ostringstream oss; 
+        oss << "\nBacktrace Crash Call Stack Using LIBUNWIND Utilities:\n" << std::endl;
+
+        oss << "{FatalLog_t} Beginning backtrace for signal: " << signum << "\n";
+        oss << "{FatalLog_t} Sent by PID: " << siginfo->si_pid << "\n\n";
+        if (siginfo->si_addr) 
+        {   
+            oss << "{FatalLog_t} Pointer to location of error: 0x" 
+                << std::hex << std::uppercase << siginfo->si_addr << "\n\n";
+        }
+        oss << "{FatalLog_t} Invoked from address: 0x" 
+            << std::hex << std::uppercase 
+            << ((ucontext_t *)context)->uc_mcontext.gregs[REG_RIP] << "\n\n";
+        
+        unw_cursor_t unwindCursor;
+        unw_context_t unwindContext;
+
+        // Initialize cursor to current frame for local unwinding.
+        unw_getcontext(&unwindContext);
+        unw_init_local(&unwindCursor, &unwindContext);
+
+        // Unwind frames one by one, going up the frame stack.
+        while (unw_step(&unwindCursor) > 0)
+        {
+            unw_word_t offset, pc;
+            unw_get_reg(&unwindCursor, UNW_REG_IP, &pc);
+            if (pc == 0)
+            {
+                break;
+            }
+            oss << "0x" << std::setfill('0') << std::setw(12) << std::hex
+                << std::uppercase << static_cast<unsigned long int>(pc) << ":";
+
+            char sym[256];
+            if (unw_get_proc_name(&unwindCursor, sym, sizeof(sym), &offset) == 0)
+            {
+                // output_buffer may instead be NULL; in that case, the
+                // demangled name is placed in a region of memory 
+                // allocated with malloc.
+                char* nameptr = sym;
+                int status;
+                char* demangled = abi::__cxa_demangle(sym, nullptr, nullptr, &status);
+                if (status == 0)
+                {
+                    nameptr = demangled;
+                }
+                oss << " (" << nameptr << "+0x" << std::setfill('0')
+                    << std::setw(2) << std::hex << std::uppercase 
+                    << static_cast<unsigned long int>(offset) << ")\n";
+
+                std::free(demangled);
+            }
+            else
+            {
+                oss << " -- error: unable to obtain symbol name for this frame\n";
+            }
+        }
+        
+        std::cerr << oss.str() << std::endl;
+        
+        // resend the signal to the default handler in order to produce a core dump
+        (void) signal(signum, SIG_DFL);
+        (void) kill(syscall(__NR_gettid), signum);
+    }
+    
     // TBD Nuertey Odzeyem; this utility could be enhanced to take in an
     // optional FD argument and write the backtrace directly to a file with:
     //
@@ -561,12 +725,12 @@ namespace Utility
         // assign to both sa_handler and sa_sigaction.
         sigemptyset(&action.sa_mask);
         action.sa_sigaction = crashHandler;
-        action.sa_flags = SA_SIGINFO; // 3rd parameter of handler would 
+        action.sa_flags = SA_SIGINFO; // 3rd parameter of handler should 
                                       // be siginfo_t additional data
 
         if constexpr (0 == NUMBER_OF_SIGNALS)
         {
-            // Monitor default core dump signals
+            // Monitor default core dump signals:
             sigaction(SIGBUS,  &action, NULL); // Dump core from bus error (bad memory access) signal.
             sigaction(SIGABRT, &action, NULL); // Dump core from abort signal (cause abnormal process termination).
             sigaction(SIGFPE,  &action, NULL); // Dump core on floating-point exception signal.
@@ -677,9 +841,10 @@ namespace Utility
             
             ((oss << ' ' << args), ...);
                 
-            std::string logString = oss.str();
-        
-            std::cout << logString << "\n";
+            // Ensure that even the newlines are properly output without
+            // being incorrectly interspersed.
+            std::string logString = oss.str() + "\n";
+            std::cout << logString;
         }
         else if constexpr (std::is_same_v<T, TraceLog_t>)
         {
@@ -690,9 +855,10 @@ namespace Utility
             
             ((oss << ' ' << args), ...);
                 
-            std::string logString = oss.str();
-        
-            std::cout << logString << "\n";
+            // Ensure that even the newlines are properly output without
+            // being incorrectly interspersed.
+            std::string logString = oss.str() + "\n";
+            std::cout << logString;
         }
         else if constexpr (std::is_same_v<T, InfoLog_t>)
         {
@@ -703,9 +869,10 @@ namespace Utility
             
             ((oss << ' ' << args), ...);
                 
-            std::string logString = oss.str();
-        
-            std::cout << logString << "\n";
+            // Ensure that even the newlines are properly output without
+            // being incorrectly interspersed.
+            std::string logString = oss.str() + "\n";
+            std::cout << logString;
         }
         else if constexpr (std::is_same_v<T, ErrorLog_t>)
         {
@@ -716,9 +883,10 @@ namespace Utility
             
             ((oss << ' ' << args), ...);
                 
-            std::string logString = oss.str();
-        
-            std::cerr << logString << "\n";
+            // Ensure that even the newlines are properly output without
+            // being incorrectly interspersed.
+            std::string logString = oss.str() + "\n";
+            std::cerr << logString;
         }
         else if constexpr (std::is_same_v<T, WarnLog_t>)
         {
@@ -729,9 +897,10 @@ namespace Utility
             
             ((oss << ' ' << args), ...);
                 
-            std::string logString = oss.str();
-        
-            std::cerr << logString << "\n";
+            // Ensure that even the newlines are properly output without
+            // being incorrectly interspersed.
+            std::string logString = oss.str() + "\n";
+            std::cerr << logString;
         }
         else if constexpr (std::is_same_v<T, CriticalLog_t>)
         {
@@ -742,9 +911,10 @@ namespace Utility
             
             ((oss << ' ' << args), ...);
                 
-            std::string logString = oss.str();
-        
-            std::cerr << logString << "\n";
+            // Ensure that even the newlines are properly output without
+            // being incorrectly interspersed.
+            std::string logString = oss.str() + "\n";
+            std::cerr << logString;
         }
     };
 }
