@@ -133,6 +133,8 @@ incdir += include_directories(
 # (-lpthread) and libc generally.
 thread_dep = dependency('threads', required : true)
 
+unwind_dep = dependency('libunwind', required : true)
+
 # How To Toggle Between System Libraries And Embedded Sources:
 #
 # To illustrate the correct way to have a project depend upon system 
@@ -204,6 +206,7 @@ sensor_node_project = executable(
     dependencies : [ asan_dep,
                      ubsan_dep,
                      thread_dep, 
+                     unwind_dep,
                      #spdlog_dep # spdlog should not have to be depended on as it is header-only.
                      fmt_dep
                    ],

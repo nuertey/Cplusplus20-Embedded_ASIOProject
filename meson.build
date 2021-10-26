@@ -37,7 +37,7 @@ compiler_settings = [
     '-pedantic',
     
     # Expose the dynamic symbol table so we can see actual symbol names
-    # instead of the binary name during system crash logging:
+    # instead of the binary name during system crash logging (backtrace):
     '-rdynamic',
     '-O3',
     
@@ -139,6 +139,8 @@ sensor_node = subproject('TestArtifactSensorNode')
 # (-lpthread) and libc generally.
 thread_dep = dependency('threads', required : true)
 
+unwind_dep = dependency('libunwind', required : true)
+
 # How To Toggle Between System Libraries And Embedded Sources:
 #
 # To illustrate the correct way to have a project depend upon system 
@@ -194,7 +196,8 @@ temperature_readout_project = executable(
     include_directories : incdir, # Do NOT explicitly specify an array object here.
     dependencies : [  asan_dep,
                       ubsan_dep,
-                      thread_dep, 
+                      thread_dep,
+                      unwind_dep, 
                       fmt_dep
                    ],
     # As math.h is not a part of the standard C library, ensure to link to it.

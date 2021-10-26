@@ -44,9 +44,31 @@
 ***********************************************************************/
 #pragma once
 
+// Normally, libunwind supports both local and remote unwinding. However,
+// if you tell libunwind that your program only needs local unwinding,
+// then a special implementation can be selected which may run much faster
+// than the generic implementation which supports both kinds of unwinding.
+// To select this optimized version, simply define the macro UNW_LOCAL_ONLY
+// before including the headerfile <libunwind.h>. It is perfectly OK for
+// a single program to employ both local-only and generic unwinding. 
+// That is, whether or not UNW_LOCAL_ONLY is defined is a choice that 
+// each source-file (compilation-unit) can make on its own. Independent
+// of the setting(s) of UNW_LOCAL_ONLY, you'll always link the same
+// library into the program (normally -lunwind). Furthermore, the portion
+// of libunwind that manages unwind-info for dynamically generated code
+// is not affected by the setting of UNW_LOCAL_ONLY. 
+#define UNW_LOCAL_ONLY
+
 // For POSIX signal handling (i.e. signal requests to terminate 
 // application execution):  
 #include <signal.h>
+
+// For stack frame unwinding/backtracing:
+#include <execinfo.h>
+#include <cxxabi.h>
+#include <libunwind.h>
+#include <cstdio>
+#include <cstdlib>
 
 // spdlog headers:
 #include "spdlog/fmt/bundled/ostream.h"
@@ -324,6 +346,241 @@ namespace Utility
         }
 
     private:
+    };
+    
+    // TBD Nuertey Odzeyem; this utility could be enhanced to take in an
+    // optional FD argument and write the backtrace directly to a file with:
+    //
+    // backtrace_symbols_fd() takes the same buffer and size arguments as
+    // backtrace_symbols(), but instead of returning an array of strings 
+    // to the caller, it writes the strings, one per line, to the file
+    // descriptor fd.
+    const auto CreateBacktrace = []()
+    {
+        // Since the second argument of backtrace() specifies the maximum
+        // number of addresses that can be stored in the buffer specified
+        // by the first (man 3 backtrace), a value of 1024 is unnecessarily
+        // generous here. A value of 20 should do fine, and printing a
+        // warning for possible truncation when bt_size == 20 is good
+        // practice.
+        const size_t MAX_DEPTH = 100;
+        size_t stack_depth;
+        void *stack_addrs[MAX_DEPTH];
+        char **stack_strings;
+        std::ostringstream oss; 
+
+        stack_depth = backtrace(stack_addrs, MAX_DEPTH);
+        stack_strings = backtrace_symbols(stack_addrs, stack_depth);
+
+        oss << "Backtrace Call Stack Using GLIBC Utilities:" << std::endl;
+
+        // Skip the first stack frame as it simply points here.
+        for (size_t i = 1; i < stack_depth; i++)
+        {
+            // TBD Nuertey Odzeyem; A guess for now. Enhance later due
+            // to in-depth research as template names will be much wider.
+            size_t sz = 256; 
+            char *function = (char*)malloc(sz);
+            char *begin = 0, *end = 0;
+
+            // Find the parentheses and address offset surrounding the
+            // mangled name.
+            for (char *j = stack_strings[i]; *j; ++j)
+            {
+                if (*j == '(')
+                {
+                    begin = j;
+                }
+                else if (*j == '+')
+                {
+                    end = j;
+                }
+            }
+
+            if (begin && end)
+            {
+                *begin++ = 0;
+                std::string full_func_name(end);
+                *end = 0; // Found our mangled name, now in [begin, end)
+
+                // The cross-vendor C++ Application Binary Interface. A 
+                // namespace alias to __cxxabiv1. GCC subscribes to a 
+                // relatively-new cross-vendor ABI for C++, sometimes 
+                // called the IA64 ABI because it happens to be the native
+                // ABI for that platform. It is summarized at:
+                //
+                // http://www.codesourcery.com/cxx-abi/ 
+                //
+                // -----------------------------------------------------
+                // New ABI-mandated entry point in the C++ runtime library
+                // for demangling. 
+                //
+                // Function Documentation:
+                //
+                // char* abi::__cxa_demangle(const char * mangled_name,
+                //                           char *       output_buffer,
+                //                           size_t *     length,
+                //                           int *        status     
+                //                          )   
+                // Parameters:
+                //  mangled_name    A NUL-terminated character string
+                //                  containing the name to be demangled.
+                //  output_buffer   A region of memory, allocated with
+                //                  malloc, of *length bytes, into which 
+                //                  the demangled name is stored. If 
+                //                  output_buffer is not long enough, it
+                //                  is expanded using realloc. output_buffer
+                //                  may instead be NULL; in that case, 
+                //                  the demangled name is placed in a 
+                //                  region of memory allocated with malloc.
+                //  length          If length is non-NULL, the length of
+                //                  the buffer containing the demangled
+                //                  name is placed in *length.
+                //  status          *status is set to one of the 
+                //                  following values:
+                // 
+                //       0: The demangling operation succeeded.
+                //      -1: A memory allocation failiure occurred.
+                //      -2: mangled_name is not a valid name under the C++ ABI mangling rules.
+                //      -3: One of the arguments is invalid.
+                // 
+                // Returns:
+                //  A pointer to the start of the NUL-terminated demangled
+                //  name, or NULL if the demangling fails. The caller is
+                //  responsible for deallocating this memory using free.
+                int status;
+                char *ret = abi::__cxa_demangle(begin, function, &sz, &status);
+
+                if (ret)
+                {
+                    // Return value may be a realloc() of the input.
+                    function = ret;
+                }
+                else
+                {
+                    // Demangling failed, just pretend it's a C function with no args.
+                    std::strncpy(function, begin, sz);
+                    std::strncat(function, "()", sz);
+                    function[sz-1] = 0;
+                }
+
+                oss << "    " << stack_strings[i] << ":" << function 
+                    << " {" << full_func_name << "}" << std::endl;
+            }
+            else
+            {
+                // Did not find the mangled name, just print the whole line.
+                oss << "    " << stack_strings[i] << std::endl;
+            }
+            free(function);
+        }
+
+        free(stack_strings); // malloc()ed by backtrace_symbols
+        return oss.str();
+    };
+
+    // libunwind is the most modern, widespread and portable solution to
+    // obtaining the backtrace. It is also more flexible than glibc's
+    // backtrace and backtrace_symbols, as it is able to provide extra
+    // information such as values of CPU registers at each stack frame.
+    const auto CreateLibunwindBacktrace = []()
+    {
+        std::ostringstream oss; 
+        oss << "Backtrace Call Stack Using LIBUNWIND Utilities:" << std::endl;
+        
+        unw_cursor_t cursor;
+        unw_context_t context;
+
+        // Initialize cursor to current frame for local unwinding.
+        unw_getcontext(&context);
+        unw_init_local(&cursor, &context);
+
+        // Unwind frames one by one, going up the frame stack.
+        while (unw_step(&cursor) > 0)
+        {
+            unw_word_t offset, pc;
+            unw_get_reg(&cursor, UNW_REG_IP, &pc);
+            if (pc == 0)
+            {
+                break;
+            }
+            oss << "0x" << std::setfill('0') << std::setw(12) << std::hex
+                << std::uppercase << static_cast<unsigned long int>(pc) << ":";
+
+            char sym[256];
+            if (unw_get_proc_name(&cursor, sym, sizeof(sym), &offset) == 0)
+            {
+                // output_buffer may instead be NULL; in that case, the
+                // demangled name is placed in a region of memory 
+                // allocated with malloc.
+                char* nameptr = sym;
+                int status;
+                char* demangled = abi::__cxa_demangle(sym, nullptr, nullptr, &status);
+                if (status == 0)
+                {
+                    nameptr = demangled;
+                }
+                oss << " (" << nameptr << "+0x" << std::setfill('0')
+                    << std::setw(2) << std::hex << std::uppercase 
+                    << static_cast<unsigned long int>(offset) << ")\n";
+
+                std::free(demangled);
+            }
+            else
+            {
+                oss << " -- error: unable to obtain symbol name for this frame\n";
+            }
+        }
+        
+        return oss.str();
+    };
+    
+    using CrashHandlerPtr_t = std::add_pointer_t<void(int, siginfo_t *, void *)>;
+
+    const auto InstallCrashHandler = [](CrashHandlerPtr_t crashHandler,
+                                        auto ...signalArgs)
+    {
+        (assert(((void)"Signal argument CANNOT be SIGKILL or SIGSTOP", (signalArgs != SIGKILL) && (signalArgs != SIGSTOP))), ...);
+        
+        static constexpr size_t NUMBER_OF_SIGNALS = sizeof...(signalArgs);
+        
+        struct sigaction action;
+        memset(&action, 0, sizeof(struct sigaction));
+              
+        // Type-check the template type of the signal handler argument
+        // at compile-time:
+        static_assert((std::is_same_v<CrashHandlerPtr_t, 
+                                      decltype(action.sa_sigaction)>),
+                       "Hey! Signal handler function/callback/lambda/class \
+                       method MUST satisfy the following type:\n\t\
+                       void (*)(int, siginfo_t *, void *)");
+
+        // As the above static_assert is now confirmed to be correct,  
+        // we can now safely assign the signal handler. Note that on some
+        // system architectures, a union is involved; therefore do not 
+        // assign to both sa_handler and sa_sigaction.
+        sigemptyset(&action.sa_mask);
+        action.sa_sigaction = crashHandler;
+        action.sa_flags = SA_SIGINFO; // 3rd parameter of handler would 
+                                      // be siginfo_t additional data
+
+        if constexpr (0 == NUMBER_OF_SIGNALS)
+        {
+            // Monitor default core dump signals
+            sigaction(SIGBUS,  &action, NULL); // Dump core from bus error (bad memory access) signal.
+            sigaction(SIGABRT, &action, NULL); // Dump core from abort signal (cause abnormal process termination).
+            sigaction(SIGFPE,  &action, NULL); // Dump core on floating-point exception signal.
+            sigaction(SIGSEGV, &action, NULL); // Dump core on invalid memory reference signal (segmentation fault).
+            sigaction(SIGILL,  &action, NULL); // Dump core on illegal instruction signal.
+            sigaction(SIGQUIT, &action, NULL); // Dump core from keyboard signal (user presses 'ctrl-\').
+            sigaction(SIGSYS,  &action, NULL); // Dump core from bad system call (SVr4).
+        }
+        else
+        {
+            // Allow the user the choice of specifying which of the core
+            // dump signals we want to monitor for.
+            (sigaction(signalArgs, &action, NULL), ...);
+        }
     };
     
     using SignalHandlerPtr_t = std::add_pointer_t<void(int)>;
