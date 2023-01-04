@@ -519,6 +519,8 @@ namespace Utility
     // backtrace_symbols(), but instead of returning an array of strings 
     // to the caller, it writes the strings, one per line, to the file
     // descriptor fd.
+    
+    // Programmatic access to the call stack in C++:
     const auto CreateBacktrace = []()
     {
         // Since the second argument of backtrace() specifies the maximum
